@@ -1,0 +1,20 @@
+
+Originally Assimp is compiled as a dynamic library with CMake.
+
+The Cinder-Assimp block has a statically compiled version included.
+The static library can be recompiled with the following steps:
+
+Download Assimp from
+http://sourceforge.net/projects/assimp/files/assimp-2.0/assimp--2.0.863-sdk.zip/download
+
+unzip assimp--2.0.863-sdk
+cd assimp--2.0.863-sdk 
+patch -p1 <assimp-static.patch
+cmake -D ENABLE_BOOST_WORKAROUND=ON -D CMAKE_CXX_FLAGS="-fvisibility-inlines-hidden" .
+cd code
+make
+
+which should create libassimp.a in the current directory.
+
+
+
