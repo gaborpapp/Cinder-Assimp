@@ -1,0 +1,9 @@
+TARGET = 'AssimpApp'
+SOURCES  = ['AssimpApp.cpp']
+RESOURCES = ['seymour.dae', 'seymour.jpg']
+BLOCKS = ['assimp']
+DEBUG = 1
+
+SConscript('../../../../../scons/SConscript',
+	exports = ['TARGET', 'SOURCES', 'DEBUG', 'RESOURCES', 'BLOCKS'])
+
