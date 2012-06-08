@@ -33,6 +33,7 @@ class AssimpLoader
 	public:
 		/** Constructs and does the parsing of the file **/
 		AssimpLoader(DataSourceRef dataSource);
+		AssimpLoader(fs::path filename);
 		~AssimpLoader();
 
 		/** Loads all the groups present in the file into a single TriMesh
@@ -45,7 +46,6 @@ class AssimpLoader
 	private:
 		Buffer mBuffer;
 
-		void load();
 		void recursiveLoad(TriMesh *destTriMesh, const aiScene *sc, const aiNode* nd);
 
 		Assimp::Importer importer;

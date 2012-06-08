@@ -24,21 +24,24 @@ using namespace ci::app;
 AssimpLoader::AssimpLoader(DataSourceRef dataSource)
 	: mBuffer(dataSource->getBuffer())
 {
-	load();
-}
-
-AssimpLoader::~AssimpLoader()
-{
-}
-
-void AssimpLoader::load()
-{
 	const void *data = mBuffer.getData();
 	size_t data_size = mBuffer.getDataSize();
 
 	scene = importer.ReadFileFromMemory(data, data_size, 0);
 	if (!scene)
 		throw AssimpLoaderExc();
+}
+
+AssimpLoader::AssimpLoader(fs::path filename)
+{
+	scene = importer.ReadFile(filename.string(), 0);
+	if (!scene)
+		throw AssimpLoaderExc();
+}
+
+
+AssimpLoader::~AssimpLoader()
+{
 }
 
 void AssimpLoader::load(TriMesh *destTriMesh)
