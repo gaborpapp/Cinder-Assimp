@@ -27,7 +27,7 @@ using namespace ci;
 
 namespace mndl { namespace assimp {
 
-static void fromAssimp( const aiMesh *aim, TriMesh *cim, AssimpMeshHelper *helper = NULL )
+static void fromAssimp( const aiMesh *aim, TriMesh *cim )
 {
 	// copy vertices
 	for ( unsigned i = 0; i < aim->mNumVertices; ++i )
@@ -49,14 +49,6 @@ static void fromAssimp( const aiMesh *aim, TriMesh *cim, AssimpMeshHelper *helpe
 	{
 		for ( unsigned i = 0; i < aim->mNumVertices; ++i )
 		{
-			/*
-			if( helper != NULL && helper->texture.getWidth() > 0.0 ){
-				ofVec2f texCoord = helper->texture.getCoordFromPercent(aim->mTextureCoords[0][i].x ,aim->mTextureCoords[0][i].y);
-				ofm.addTexCoord(texCoord);
-			}else{
-				ofm.addTexCoord(ofVec2f(aim->mTextureCoords[0][i].x ,aim->mTextureCoords[0][i].y));	
-			}
-			*/
 			cim->appendTexCoord( Vec2f( aim->mTextureCoords[0][i].x,
 										aim->mTextureCoords[0][i].y ) );
 		}
@@ -112,56 +104,56 @@ AssimpLoader::~AssimpLoader()
 
 void AssimpLoader::calculateDimensions()
 {
-    getBoundingBox( &mSceneMin, &mSceneMax );
-	//app::console() << mSceneMin << ", " << mSceneMax << endl;
-	mSceneCenter = mSceneMin + mSceneMax / 2.f;
+	Vec3f aMin, aMax;
+	calculateBoundingBox( &aMin, &aMax );
+	mBoundingBox = AxisAlignedBox3f( aMin, aMax );
 }
 
-void AssimpLoader::getBoundingBox( ci::Vec3f *min, ci::Vec3f *max )
+void AssimpLoader::calculateBoundingBox( ci::Vec3f *min, ci::Vec3f *max )
 {
-    aiMatrix4x4 trafo;
+	aiMatrix4x4 trafo;
 
 	aiVector3D aiMin, aiMax;
-    aiMin.x = aiMin.y = aiMin.z =  1e10f;
-    aiMax.x = aiMax.y = aiMax.z = -1e10f;
+	aiMin.x = aiMin.y = aiMin.z =  1e10f;
+	aiMax.x = aiMax.y = aiMax.z = -1e10f;
 
-    getBoundingBoxForNode( mScene->mRootNode, &aiMin, &aiMax, &trafo );
+	calculateBoundingBoxForNode( mScene->mRootNode, &aiMin, &aiMax, &trafo );
 	*min = fromAssimp( aiMin );
 	*max = fromAssimp( aiMax );
 }
 
-void AssimpLoader::getBoundingBoxForNode( const aiNode *nd, aiVector3D *min, aiVector3D *max, aiMatrix4x4 *trafo )
+void AssimpLoader::calculateBoundingBoxForNode( const aiNode *nd, aiVector3D *min, aiVector3D *max, aiMatrix4x4 *trafo )
 {
-    aiMatrix4x4 prev;
+	aiMatrix4x4 prev;
 
-    prev = *trafo;
-    //aiMultiplyMatrix4( trafo, &nd->mTransformation );
+	prev = *trafo;
+	//aiMultiplyMatrix4( trafo, &nd->mTransformation );
 	*trafo = *trafo * nd->mTransformation;
 
-    for ( unsigned n = 0; n < nd->mNumMeshes; ++n )
+	for ( unsigned n = 0; n < nd->mNumMeshes; ++n )
 	{
-        const struct aiMesh *mesh = mScene->mMeshes[ nd->mMeshes[ n ] ];
-        for ( unsigned t = 0; t < mesh->mNumVertices; ++t )
+		const struct aiMesh *mesh = mScene->mMeshes[ nd->mMeshes[ n ] ];
+		for ( unsigned t = 0; t < mesh->mNumVertices; ++t )
 		{
-            aiVector3D tmp = mesh->mVertices[ t ];
-            //aiTransformVecByMatrix4( &tmp, trafo );
+			aiVector3D tmp = mesh->mVertices[ t ];
+			//aiTransformVecByMatrix4( &tmp, trafo );
 			tmp *= (*trafo);
 
-            min->x = math<float>::min( min->x, tmp.x );
-            min->y = math<float>::min( min->y, tmp.y );
-            min->z = math<float>::min( min->z, tmp.z );
-            max->x = math<float>::max( max->x, tmp.x );
-            max->y = math<float>::max( max->y, tmp.y );
-            max->z = math<float>::max( max->z, tmp.z );
-        }
-    }
+			min->x = math<float>::min( min->x, tmp.x );
+			min->y = math<float>::min( min->y, tmp.y );
+			min->z = math<float>::min( min->z, tmp.z );
+			max->x = math<float>::max( max->x, tmp.x );
+			max->y = math<float>::max( max->y, tmp.y );
+			max->z = math<float>::max( max->z, tmp.z );
+		}
+	}
 
-    for ( unsigned n = 0; n < nd->mNumChildren; ++n )
+	for ( unsigned n = 0; n < nd->mNumChildren; ++n )
 	{
-        getBoundingBoxForNode( nd->mChildren[n], min, max, trafo );
-    }
+		calculateBoundingBoxForNode( nd->mChildren[n], min, max, trafo );
+	}
 
-    *trafo = prev;
+	*trafo = prev;
 }
 
 void AssimpLoader::loadGlResources()
@@ -178,11 +170,9 @@ void AssimpLoader::loadGlResources()
 		aiMesh *mesh = mScene->mMeshes[ i ];
 
 		// the current meshHelper we will be populating data into.
-		//ofxAssimpMeshHelper & meshHelper = modelMeshes[i];
 		AssimpMeshHelper meshHelper;
 
 		meshHelper.mName = string( mesh->mName.C_Str() );
-		//meshHelper.texture = NULL;
 
 		// Handle material info
 		aiMaterial *mtl = mScene->mMaterials[ mesh->mMaterialIndex ];
@@ -253,7 +243,7 @@ void AssimpLoader::loadGlResources()
 		}
 
 		meshHelper.mAiMesh = mesh;
-		fromAssimp( mesh, &meshHelper.mCachedTriMesh, &meshHelper );
+		fromAssimp( mesh, &meshHelper.mCachedTriMesh );
 		meshHelper.mValidCache = true;
 		meshHelper.mHasChanged = false;
 
@@ -302,7 +292,6 @@ void AssimpLoader::loadGlResources()
 #if 0
 		meshHelper.vbo.setIndexData(&meshHelper.indices[0],meshHelper.indices.size(),GL_STATIC_DRAW);
 #endif
-
 		mModelMeshes.push_back( meshHelper );
 	}
 

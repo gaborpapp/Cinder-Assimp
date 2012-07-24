@@ -27,6 +27,7 @@
 #include "cinder/Color.h"
 #include "cinder/TriMesh.h"
 #include "cinder/Stream.h"
+#include "cinder/AxisAlignedBox.h"
 
 #include "AssimpMeshHelper.h"
 
@@ -80,19 +81,20 @@ class AssimpLoader
 
 		void draw();
 
+		ci::AxisAlignedBox3f getBoundingBox() const { return mBoundingBox; }
+
 	private:
 		void loadGlResources();
 
 		void calculateDimensions();
-		void getBoundingBox( ci::Vec3f *min, ci::Vec3f *max );
-		void getBoundingBoxForNode( const aiNode *nd, aiVector3D *min, aiVector3D *max, aiMatrix4x4 *trafo );
+		void calculateBoundingBox( ci::Vec3f *min, ci::Vec3f *max );
+		void calculateBoundingBoxForNode( const aiNode *nd, aiVector3D *min, aiVector3D *max, aiMatrix4x4 *trafo );
 
 		std::shared_ptr< Assimp::Importer > mImporterRef; // mScene will be destroyed along with the Importer object
 		ci::fs::path mFilePath; /// model path
 		const aiScene *mScene;
 
-		ci::Vec3f mSceneMin, mSceneMax; /// scene bounding box
-		ci::Vec3f mSceneCenter;
+		ci::AxisAlignedBox3f mBoundingBox;
 
 		std::vector< AssimpMeshHelper > mModelMeshes;
 

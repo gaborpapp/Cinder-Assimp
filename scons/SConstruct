@@ -2,7 +2,10 @@ env = Environment()
 
 env['APP_TARGET'] = 'AssimpApp'
 env['APP_SOURCES'] = ['AssimpApp.cpp']
-env['ASSETS'] = ['seymour.dae', 'seymour.jpg']
+#env['ASSETS'] = ['seymour.dae', 'seymour.jpg']
+env['ASSETS'] = ['basketball_player_n.jpg', 'basketball_player_s.jpg',
+	'basketball_player_white.png', 'head_white.png',
+	'player_249_1833.dae']
 env['DEBUG'] = 1
 
 # Cinder-Assimp

@@ -55,7 +55,8 @@ void AssimpApp::prepareSettings( Settings *settings )
 
 void AssimpApp::setup()
 {
-	mAssimpLoader = assimp::AssimpLoader( getAssetPath( "seymour.dae" ) );
+	//mAssimpLoader = assimp::AssimpLoader( getAssetPath( "seymour.dae" ) );
+	mAssimpLoader = assimp::AssimpLoader( getAssetPath( "player_249_1833.dae" ) );
 }
 
 void AssimpApp::resize( ResizeEvent event )
@@ -73,15 +74,15 @@ void AssimpApp::draw()
 
 	gl::setMatrices( mCamera );
 
+	mCamera.lookAt( Vec3f( 0, 1, -2 ), Vec3f( 0, 1, 0 ) );
 	gl::enableDepthWrite();
 	gl::enableDepthRead();
 
-	gl::rotate( Vec3f(0, getElapsedSeconds() * 20., 0) );
-	gl::scale( Vec3f(4., 4., 4.) );
-	gl::translate( Vec3f(0, -5, 0) );
+	gl::rotate( Vec3f( -90, 0., getElapsedSeconds() * 20 ) );
 	gl::color( Color::white() );
 
 	mAssimpLoader.draw();
+	//gl::drawStrokedCube( mAssimpLoader.getBoundingBox() );
 }
 
 CINDER_APP_BASIC( AssimpApp, RendererGl(0) )
