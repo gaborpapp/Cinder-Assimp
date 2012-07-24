@@ -88,12 +88,18 @@ class AssimpLoader
 		void getBoundingBoxForNode( const aiNode *nd, aiVector3D *min, aiVector3D *max, aiMatrix4x4 *trafo );
 
 		std::shared_ptr< Assimp::Importer > mImporterRef; // mScene will be destroyed along with the Importer object
+		ci::fs::path mFilePath; /// model path
 		const aiScene *mScene;
 
 		ci::Vec3f mSceneMin, mSceneMax; /// scene bounding box
 		ci::Vec3f mSceneCenter;
 
 		std::vector< AssimpMeshHelper > mModelMeshes;
+
+		bool mUsingMaterials;
+		bool mUsingNormals;
+		bool mUsingTextures;
+		bool mUsingColors;
 };
 
 } } // namespace mndl::assimp

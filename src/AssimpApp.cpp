@@ -43,9 +43,7 @@ class AssimpApp : public AppBasic
 		void draw();
 
 	private:
-		gl::Texture txt;
-
-		CameraPersp camera;
+		CameraPersp mCamera;
 		assimp::AssimpLoader mAssimpLoader;
 };
 
@@ -58,13 +56,11 @@ void AssimpApp::prepareSettings( Settings *settings )
 void AssimpApp::setup()
 {
 	mAssimpLoader = assimp::AssimpLoader( getAssetPath( "seymour.dae" ) );
-
-	txt = loadImage( getAssetPath( "seymour.jpg" ) );
 }
 
 void AssimpApp::resize( ResizeEvent event )
 {
-	camera.setPerspective( 60., getWindowAspectRatio(), 1, 1000 );
+	mCamera.setPerspective( 60., getWindowAspectRatio(), 1, 1000 );
 }
 
 void AssimpApp::update()
@@ -75,13 +71,10 @@ void AssimpApp::draw()
 {
 	gl::clear( Color::black() );
 
-	gl::setMatrices( camera );
+	gl::setMatrices( mCamera );
 
 	gl::enableDepthWrite();
 	gl::enableDepthRead();
-
-	//gl::enable( GL_TEXTURE_2D );
-	//txt.bind();
 
 	gl::rotate( Vec3f(0, getElapsedSeconds() * 20., 0) );
 	gl::scale( Vec3f(4., 4., 4.) );
@@ -89,9 +82,6 @@ void AssimpApp::draw()
 	gl::color( Color::white() );
 
 	mAssimpLoader.draw();
-
-	//txt.unbind();
-	//gl::disable(GL_TEXTURE_2D);
 }
 
 CINDER_APP_BASIC( AssimpApp, RendererGl(0) )

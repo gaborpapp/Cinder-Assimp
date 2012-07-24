@@ -16,6 +16,7 @@
 */
 
 #include "cinder/app/App.h"
+#include "cinder/ImageIo.h"
 #include "cinder/CinderMath.h"
 #include "cinder/Utilities.h"
 
@@ -44,18 +45,22 @@ static void fromAssimp( const aiMesh *aim, TriMesh *cim, AssimpMeshHelper *helpe
 
 	// aiVector3D *	mTextureCoords [AI_MAX_NUMBER_OF_TEXTURECOORDS]
 	// just one for now
-#if 0
-	if(aim->GetNumUVChannels()>0){
-		for (int i=0; i < (int)aim->mNumVertices;i++){
+	if ( aim->GetNumUVChannels() > 0 )
+	{
+		for ( unsigned i = 0; i < aim->mNumVertices; ++i )
+		{
+			/*
 			if( helper != NULL && helper->texture.getWidth() > 0.0 ){
 				ofVec2f texCoord = helper->texture.getCoordFromPercent(aim->mTextureCoords[0][i].x ,aim->mTextureCoords[0][i].y);
 				ofm.addTexCoord(texCoord);
 			}else{
 				ofm.addTexCoord(ofVec2f(aim->mTextureCoords[0][i].x ,aim->mTextureCoords[0][i].y));	
 			}
+			*/
+			cim->appendTexCoord( Vec2f( aim->mTextureCoords[0][i].x,
+										aim->mTextureCoords[0][i].y ) );
 		}
 	}
-#endif
 
 	//aiColor4D *mColors [AI_MAX_NUMBER_OF_COLOR_SETS]
 	if ( aim->GetNumColorChannels() > 0 )
@@ -81,10 +86,16 @@ static void fromAssimp( const aiMesh *aim, TriMesh *cim, AssimpMeshHelper *helpe
 	}
 }
 
-AssimpLoader::AssimpLoader( fs::path filename )
+AssimpLoader::AssimpLoader( fs::path filename ) :
+	mUsingMaterials( true ),
+	mUsingNormals( true ),
+	mUsingTextures( true ),
+	mUsingColors( true ),
+	mFilePath( filename )
 {
 	unsigned flags = aiProcessPreset_TargetRealtime_MaxQuality |
-					 aiProcess_Triangulate;
+					 aiProcess_Triangulate |
+					 aiProcess_FlipUVs;
 
 	mImporterRef = shared_ptr< Assimp::Importer >( new Assimp::Importer() );
 	mScene = mImporterRef->ReadFile( filename.string(), flags );
@@ -170,34 +181,40 @@ void AssimpLoader::loadGlResources()
 		//ofxAssimpMeshHelper & meshHelper = modelMeshes[i];
 		AssimpMeshHelper meshHelper;
 
+		meshHelper.mName = string( mesh->mName.C_Str() );
 		//meshHelper.texture = NULL;
 
-#if 0
 		// Handle material info
-		aiMaterial* mtl = scene->mMaterials[mesh->mMaterialIndex];
+		aiMaterial *mtl = mScene->mMaterials[ mesh->mMaterialIndex ];
 		aiColor4D dcolor, scolor, acolor, ecolor;
 
-		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, &dcolor)){
-			meshHelper.material.setDiffuseColor(aiColorToOfColor(dcolor));
+		if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_DIFFUSE, &dcolor ) )
+		{
+			meshHelper.mMaterial.setDiffuse( fromAssimp( dcolor ) );
 		}
 
-		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_SPECULAR, &scolor)){
-			meshHelper.material.setSpecularColor(aiColorToOfColor(scolor));
+		if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_SPECULAR, &scolor ) )
+		{
+			meshHelper.mMaterial.setSpecular( fromAssimp( scolor ) );
 		}
 
-		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_AMBIENT, &acolor)){
-			meshHelper.material.setAmbientColor(aiColorToOfColor(acolor));
+		if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_AMBIENT, &acolor ) )
+		{
+			meshHelper.mMaterial.setAmbient( fromAssimp( acolor ) );
 		}
 
-		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_EMISSIVE, &ecolor)){
-			meshHelper.material.setEmissiveColor(aiColorToOfColor(ecolor));
+		if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_EMISSIVE, &ecolor ) )
+		{
+			meshHelper.mMaterial.setEmission( fromAssimp( ecolor ) );
 		}
 
 		float shininess;
-		if(AI_SUCCESS == aiGetMaterialFloat(mtl, AI_MATKEY_SHININESS, &shininess)){
-			meshHelper.material.setShininess(shininess);
+		if ( AI_SUCCESS == aiGetMaterialFloat( mtl, AI_MATKEY_SHININESS, &shininess ) )
+		{
+			meshHelper.mMaterial.setShininess( shininess );
 		}
 
+#if 0
 		int blendMode;
 		if(AI_SUCCESS == aiGetMaterialInteger(mtl, AI_MATKEY_BLEND_FUNC, &blendMode)){
 			if(blendMode==aiBlendMode_Default){
@@ -206,33 +223,34 @@ void AssimpLoader::loadGlResources()
 				meshHelper.blendMode=OF_BLENDMODE_ADD;
 			}
 		}
+#endif
 
 		// Culling
 		unsigned int max = 1;
 		int two_sided;
-		if((AI_SUCCESS == aiGetMaterialIntegerArray(mtl, AI_MATKEY_TWOSIDED, &two_sided, &max)) && two_sided)
-			meshHelper.twoSided = true;
+		if ( ( AI_SUCCESS == aiGetMaterialIntegerArray( mtl, AI_MATKEY_TWOSIDED, &two_sided, &max ) ) && two_sided )
+			meshHelper.mTwoSided = true;
 		else
-			meshHelper.twoSided = false;
+			meshHelper.mTwoSided = false;
 
 		// Load Textures
 		int texIndex = 0;
 		aiString texPath;
 
 		// TODO: handle other aiTextureTypes
-		if(AI_SUCCESS == mtl->GetTexture(aiTextureType_DIFFUSE, texIndex, &texPath)){
-			ofLog(OF_LOG_VERBOSE, "loading image from %s", texPath.data);
-			string modelFolder = ofFilePath::getEnclosingDirectory(filepath,false);
-			string relTexPath = ofFilePath::getEnclosingDirectory(texPath.data,false);
-			string texFile = ofFilePath::getFileName(texPath.data);
-			string realPath = modelFolder + relTexPath  + texFile;
-			if(!ofFile::doesFileExist(realPath) || !ofLoadImage(meshHelper.texture,realPath)) {
-				ofLog(OF_LOG_ERROR,string("error loading image ") + filepath + " " +realPath);
-			}else{
-				ofLog(OF_LOG_VERBOSE, "texture width: %f height %f", meshHelper.texture.getWidth(), meshHelper.texture.getHeight());
-			}
+		if ( AI_SUCCESS == mtl->GetTexture( aiTextureType_DIFFUSE, texIndex, &texPath ) )
+		{
+			app::console() << "loading image from " << texPath.data;
+			fs::path texFsPath( texPath.data );
+			fs::path modelFolder = mFilePath.parent_path();
+			fs::path relTexPath = texFsPath.parent_path();
+			fs::path texFile = texFsPath.filename();
+			fs::path realPath = modelFolder / relTexPath / texFile;
+			app::console() << " [" << realPath.string() << "]" << endl;
+
+			// TODO: cache textures
+			meshHelper.mTexture = loadImage( realPath );
 		}
-#endif
 
 		meshHelper.mAiMesh = mesh;
 		fromAssimp( mesh, &meshHelper.mCachedTriMesh, &meshHelper );
@@ -331,30 +349,29 @@ void AssimpLoader::draw()
 	}
 	*/
 	vector< AssimpMeshHelper >::const_iterator it = mModelMeshes.begin();
-	gl::enableWireframe();
+	//gl::enableWireframe();
 	for ( ; it != mModelMeshes.end(); ++it )
 	{
+		// Texture Binding
+		if ( mUsingTextures && it->mTexture )
+		{
+			it->mTexture.enableAndBind();
+		}
+
+		if ( mUsingMaterials )
+		{
+			it->mMaterial.apply();
+		}
+
+		// Culling
+		if ( it->mTwoSided )
+			gl::enable( GL_CULL_FACE );
+		else
+			gl::disable( GL_CULL_FACE );
+
 		gl::draw( it->mCachedTriMesh );
 
 		/*
-		ofxAssimpMeshHelper & meshHelper = modelMeshes.at(i);
-
-		// Texture Binding
-		if(bUsingTextures && meshHelper.texture.isAllocated()){
-			meshHelper.texture.bind();
-		}
-
-		if(bUsingMaterials){
-			meshHelper.material.begin();
-		}
-
-
-		// Culling
-		if(meshHelper.twoSided)
-			glEnable(GL_CULL_FACE);
-		else
-			glDisable(GL_CULL_FACE);
-
 		ofEnableBlendMode(meshHelper.blendMode);
 #ifndef TARGET_OPENGLES
 		meshHelper.vbo.drawElements(GL_TRIANGLES,meshHelper.indices.size());
@@ -372,11 +389,14 @@ void AssimpLoader::draw()
 		}
 #endif
 
+		*/
 		// Texture Binding
-		if(bUsingTextures && meshHelper.texture.bAllocated()){
-			meshHelper.texture.unbind();
+		if ( mUsingTextures && it->mTexture )
+		{
+			it->mTexture.unbind();
 		}
 
+		/*
 		if(bUsingMaterials){
 			meshHelper.material.end();
 		}

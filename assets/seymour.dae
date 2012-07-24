@@ -1297,7 +1297,7 @@ limitations under the License.
     </library_lights>
     <library_images>
         <image id="file5" name="file5" depth="1">
-            <init_from>boy_10.tga</init_from>
+            <init_from>seymour.jpg</init_from>
         </image>
     </library_images>
     <library_materials>
