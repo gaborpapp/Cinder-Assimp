@@ -19,9 +19,10 @@
 
 using namespace std;
 using namespace ci;
-using namespace ci::app;
 
-AssimpLoader::AssimpLoader(DataSourceRef dataSource)
+namespace mndl { namespace assimp {
+
+AssimpLoader::AssimpLoader( DataSourceRef dataSource )
 	: mBuffer(dataSource->getBuffer())
 {
 	const void *data = mBuffer.getData();
@@ -32,7 +33,7 @@ AssimpLoader::AssimpLoader(DataSourceRef dataSource)
 		throw AssimpLoaderExc();
 }
 
-AssimpLoader::AssimpLoader(fs::path filename)
+AssimpLoader::AssimpLoader( fs::path filename )
 {
 	scene = importer.ReadFile(filename.string(), 0);
 	if (!scene)
@@ -44,13 +45,13 @@ AssimpLoader::~AssimpLoader()
 {
 }
 
-void AssimpLoader::load(TriMesh *destTriMesh)
+void AssimpLoader::load( TriMesh *destTriMesh )
 {
 	destTriMesh->clear();
 	recursiveLoad(destTriMesh, scene, scene->mRootNode);
 }
 
-void AssimpLoader::recursiveLoad(TriMesh *destTriMesh, const aiScene *sc, const aiNode* nd)
+void AssimpLoader::recursiveLoad( TriMesh *destTriMesh, const aiScene *sc, const aiNode* nd )
 {
 	for (unsigned n = 0; n < nd->mNumMeshes; n++)
 	{
@@ -95,4 +96,6 @@ void AssimpLoader::recursiveLoad(TriMesh *destTriMesh, const aiScene *sc, const 
 		recursiveLoad(destTriMesh, sc, nd->mChildren[n]);
 	}
 }
+
+} } // namespace mndl::assimp
 
