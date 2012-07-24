@@ -43,10 +43,10 @@ class AssimpApp : public AppBasic
 		void draw();
 
 	private:
-		TriMesh mesh;
 		gl::Texture txt;
 
 		CameraPersp camera;
+		assimp::AssimpLoader mAssimpLoader;
 };
 
 
@@ -57,8 +57,7 @@ void AssimpApp::prepareSettings( Settings *settings )
 
 void AssimpApp::setup()
 {
-	assimp::AssimpLoader loader( getAssetPath( "seymour.dae" ) );
-	loader.load( &mesh );
+	mAssimpLoader = assimp::AssimpLoader( getAssetPath( "seymour.dae" ) );
 
 	txt = loadImage( getAssetPath( "seymour.jpg" ) );
 }
@@ -81,17 +80,18 @@ void AssimpApp::draw()
 	gl::enableDepthWrite();
 	gl::enableDepthRead();
 
-	gl::enable( GL_TEXTURE_2D );
-	txt.bind();
+	//gl::enable( GL_TEXTURE_2D );
+	//txt.bind();
 
 	gl::rotate( Vec3f(0, getElapsedSeconds() * 20., 0) );
 	gl::scale( Vec3f(4., 4., 4.) );
 	gl::translate( Vec3f(0, -5, 0) );
 	gl::color( Color::white() );
-	gl::draw( mesh );
 
-	txt.unbind();
-	gl::disable(GL_TEXTURE_2D);
+	mAssimpLoader.draw();
+
+	//txt.unbind();
+	//gl::disable(GL_TEXTURE_2D);
 }
 
 CINDER_APP_BASIC( AssimpApp, RendererGl(0) )

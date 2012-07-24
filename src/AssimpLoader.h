@@ -17,38 +17,83 @@
 
 #pragma once
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#include <vector>
 
+#include "assimp/Importer.hpp"
+#include "assimp/scene.h"
+#include "assimp/postprocess.h"
+
+#include "cinder/Cinder.h"
+#include "cinder/Color.h"
 #include "cinder/TriMesh.h"
 #include "cinder/Stream.h"
-#include "cinder/Exception.h"
+
+#include "AssimpMeshHelper.h"
 
 namespace mndl { namespace assimp {
+
+inline ci::Vec3f fromAssimp( const aiVector3D &v )
+{
+    return ci::Vec3f( v.x, v.y, v.z );
+}
+
+inline ci::ColorAf fromAssimp( const aiColor4D &c )
+{
+    return ci::ColorAf( c.r, c.g, c.b, c.a );
+}
+
+inline aiVector3D toAssimp( const ci::Vec3f &v )
+{
+    return aiVector3D( v.x, v.y, v.z );
+}
+
+inline aiColor4D toAssimp( const ci::ColorAf &c )
+{
+    return aiColor4D( c.r, c.g, c.b, c.a );
+}
+
+class AssimpLoaderExc : public std::exception
+{
+	public:
+		AssimpLoaderExc( const std::string &log ) throw()
+		{
+			strncpy( mMessage, log.c_str(), 512 );
+		}
+
+		virtual const char* what() const throw()
+		{
+			return mMessage;
+		}
+
+	private:
+		char mMessage[ 513 ];
+};
 
 class AssimpLoader
 {
 	public:
+		AssimpLoader() {}
+
 		/** Constructs and does the parsing of the file **/
-		AssimpLoader( ci::DataSourceRef dataSource );
 		AssimpLoader( ci::fs::path filename );
 		~AssimpLoader();
 
-		/** Loads all the groups present in the file into a single TriMesh
-		 *  \param destTriMesh the destination TriMesh, whose contents are cleared first
-		 **/
-		void load( ci::TriMesh *destTriMesh );
-
-		class AssimpLoaderExc : public ci::Exception {};
+		void draw();
 
 	private:
-		ci::Buffer mBuffer;
+		void loadGlResources();
 
-		void recursiveLoad( ci::TriMesh *destTriMesh, const aiScene *sc, const aiNode* nd );
+		void calculateDimensions();
+		void getBoundingBox( ci::Vec3f *min, ci::Vec3f *max );
+		void getBoundingBoxForNode( const aiNode *nd, aiVector3D *min, aiVector3D *max, aiMatrix4x4 *trafo );
 
-		Assimp::Importer importer;
-		const aiScene *scene;
+		std::shared_ptr< Assimp::Importer > mImporterRef; // mScene will be destroyed along with the Importer object
+		const aiScene *mScene;
+
+		ci::Vec3f mSceneMin, mSceneMax; /// scene bounding box
+		ci::Vec3f mSceneCenter;
+
+		std::vector< AssimpMeshHelper > mModelMeshes;
 };
 
 } } // namespace mndl::assimp
