@@ -11,7 +11,7 @@ env['DEBUG'] = 1
 # Cinder-Assimp
 _INCLUDES = [Dir('../src').abspath]
 
-_SOURCES = ['AssimpLoader.cpp']
+_SOURCES = ['AssimpLoader.cpp', 'Node.cpp']
 _SOURCES = [File('../src/' + s).abspath for s in _SOURCES]
 
 _LIBS = ['libassimp.a']
