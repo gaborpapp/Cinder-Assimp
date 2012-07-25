@@ -3,7 +3,8 @@
 #include <vector>
 #include <string>
 
-#include "assimp/mesh.h"
+//#include "assimp/mesh.h"
+#include "assimp/aiMesh.h"
 
 #include "cinder/Cinder.h"
 #include "cinder/TriMesh.h"
@@ -20,7 +21,6 @@ class AssimpMeshHelper
 	public:
 		// pointer to the aiMesh we represent.
 		const aiMesh *mAiMesh;
-
 /*
 		// VBOs
 		ofVbo vbo;

@@ -19,9 +19,16 @@
 
 #include <vector>
 
+//* 2.0
+#include "assimp/assimp.hpp"
+#include "assimp/aiScene.h"
+#include "assimp/aiPostProcess.h"
+//*/
+/* 3.0
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
+*/
 
 #include "cinder/Cinder.h"
 #include "cinder/Color.h"
@@ -69,9 +76,15 @@ inline aiColor4D toAssimp( const ci::ColorAf &c )
     return aiColor4D( c.r, c.g, c.b, c.a );
 }
 
+/* 3.0
 inline std::string fromAssimp( const aiString &s )
 {
 	return std::string( s.C_Str() );
+}
+*/
+inline std::string fromAssimp( const aiString &s )
+{
+	return std::string( s.data );
 }
 
 class AssimpLoaderExc : public std::exception
@@ -98,6 +111,8 @@ class AssimpNode : public mndl::Node
 
 		// FIXME: test
 		ci::Matrix44f mTransform;
+		aiMatrix4x4 mAiTransform;
+		const aiNode *mAiNode;
 };
 
 typedef std::shared_ptr< AssimpNode > AssimpNodeRef;
@@ -117,6 +132,9 @@ class AssimpLoader
 
 		void enableTextures( bool enable = true ) { mUsingTextures = enable; }
 		void disableTextures() { mUsingTextures = false; }
+
+		void enableSkinning( bool enable = true ) { mEnableSkinning = enable; }
+		void disableSkinning() { mEnableSkinning = false; }
 
 	private:
 		void loadAllMeshes();
@@ -142,6 +160,7 @@ class AssimpLoader
 		bool mUsingNormals;
 		bool mUsingTextures;
 		bool mUsingColors;
+		bool mEnableSkinning;
 };
 
 } } // namespace mndl::assimp

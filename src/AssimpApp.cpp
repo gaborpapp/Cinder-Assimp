@@ -54,7 +54,9 @@ class AssimpApp : public AppBasic
 		params::InterfaceGl mParams;
 		bool mEnableTextures;
 		bool mEnableWireframe;
+		bool mEnableSkinning;
 		bool mDrawBBox;
+		float mFps;
 };
 
 
@@ -65,12 +67,13 @@ void AssimpApp::prepareSettings( Settings *settings )
 
 void AssimpApp::setup()
 {
-	mAssimpLoader = assimp::AssimpLoader( getAssetPath( "seymour.dae" ) );
+	//mAssimpLoader = assimp::AssimpLoader( getAssetPath( "seymour.dae" ) );
+	mAssimpLoader = assimp::AssimpLoader( getAssetPath( "astroboy_walk.dae" ) );
 	//mAssimpLoader = assimp::AssimpLoader( getAssetPath( "player_249_1833.dae" ) );
 
 	CameraPersp cam;
 	cam.setPerspective( 60, getWindowAspectRatio(), 0.1f, 1000.0f );
-	cam.setEyePoint( Vec3f( 0, 5, 10 ) );
+	cam.setEyePoint( Vec3f( 0, 5, 20 ) );
 	cam.setCenterOfInterestPoint( Vec3f( 0, 5, 0 ) );
 	mMayaCam.setCurrentCam( cam );
 
@@ -79,12 +82,17 @@ void AssimpApp::setup()
 	mParams.addParam( "Wireframe", &mEnableWireframe );
 	mEnableTextures = true;
 	mParams.addParam( "Textures", &mEnableTextures );
+	mEnableSkinning = true;
+	mParams.addParam( "Skinning", &mEnableSkinning );
 	mDrawBBox = false;
 	mParams.addParam( "Bounding box", &mDrawBBox );
+	mParams.addSeparator();
+	mParams.addParam( "Fps", &mFps, "", true );
 }
 
 void AssimpApp::update()
 {
+	mFps = getAverageFps();
 }
 
 void AssimpApp::draw()
@@ -102,6 +110,7 @@ void AssimpApp::draw()
 	if ( mEnableWireframe )
 		gl::enableWireframe();
 	mAssimpLoader.enableTextures( mEnableTextures );
+	mAssimpLoader.enableSkinning( mEnableSkinning );
 
 	mAssimpLoader.draw();
 
