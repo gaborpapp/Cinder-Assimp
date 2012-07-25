@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2011 Gabor Papp
+ Copyright (C) 2011-2012 Gabor Papp
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -21,7 +21,9 @@
 #include "cinder/gl/Light.h"
 #include "cinder/TriMesh.h"
 #include "cinder/Camera.h"
+#include "cinder/MayaCamUI.h"
 #include "cinder/gl/Texture.h"
+#include "cinder/params/Params.h"
 
 #include "AssimpLoader.h"
 
@@ -38,13 +40,21 @@ class AssimpApp : public AppBasic
 		void setup();
 
 		void resize( ResizeEvent event );
+		void mouseDown( MouseEvent event );
+		void mouseDrag( MouseEvent event );
 
 		void update();
 		void draw();
 
 	private:
-		CameraPersp mCamera;
 		assimp::AssimpLoader mAssimpLoader;
+
+		MayaCamUI mMayaCam;
+
+		params::InterfaceGl mParams;
+		bool mEnableTextures;
+		bool mEnableWireframe;
+		bool mDrawBBox;
 };
 
 
@@ -55,13 +65,22 @@ void AssimpApp::prepareSettings( Settings *settings )
 
 void AssimpApp::setup()
 {
-	//mAssimpLoader = assimp::AssimpLoader( getAssetPath( "seymour.dae" ) );
-	mAssimpLoader = assimp::AssimpLoader( getAssetPath( "player_249_1833.dae" ) );
-}
+	mAssimpLoader = assimp::AssimpLoader( getAssetPath( "seymour.dae" ) );
+	//mAssimpLoader = assimp::AssimpLoader( getAssetPath( "player_249_1833.dae" ) );
 
-void AssimpApp::resize( ResizeEvent event )
-{
-	mCamera.setPerspective( 60., getWindowAspectRatio(), 1, 1000 );
+	CameraPersp cam;
+	cam.setPerspective( 60, getWindowAspectRatio(), 0.1f, 1000.0f );
+	cam.setEyePoint( Vec3f( 0, 5, 10 ) );
+	cam.setCenterOfInterestPoint( Vec3f( 0, 5, 0 ) );
+	mMayaCam.setCurrentCam( cam );
+
+	mParams = params::InterfaceGl( "Parameters", Vec2i( 200, 300 ) );
+	mEnableWireframe = false;
+	mParams.addParam( "Wireframe", &mEnableWireframe );
+	mEnableTextures = true;
+	mParams.addParam( "Textures", &mEnableTextures );
+	mDrawBBox = false;
+	mParams.addParam( "Bounding box", &mDrawBBox );
 }
 
 void AssimpApp::update()
@@ -72,17 +91,44 @@ void AssimpApp::draw()
 {
 	gl::clear( Color::black() );
 
-	gl::setMatrices( mCamera );
+	gl::setMatrices( mMayaCam.getCamera() );
 
-	mCamera.lookAt( Vec3f( 0, 1, -2 ), Vec3f( 0, 1, 0 ) );
 	gl::enableDepthWrite();
 	gl::enableDepthRead();
 
-	gl::rotate( Vec3f( -90, 0., getElapsedSeconds() * 20 ) );
+	//gl::rotate( Vec3f( 0, getElapsedSeconds() * 20, 0 ) );
 	gl::color( Color::white() );
 
+	if ( mEnableWireframe )
+		gl::enableWireframe();
+	mAssimpLoader.enableTextures( mEnableTextures );
+
 	mAssimpLoader.draw();
-	//gl::drawStrokedCube( mAssimpLoader.getBoundingBox() );
+
+	if ( mEnableWireframe )
+		gl::disableWireframe();
+
+	if ( mDrawBBox )
+		gl::drawStrokedCube( mAssimpLoader.getBoundingBox() );
+
+	params::InterfaceGl::draw();
+}
+
+void AssimpApp::mouseDown( MouseEvent event )
+{
+	mMayaCam.mouseDown( event.getPos() );
+}
+
+void AssimpApp::mouseDrag( MouseEvent event )
+{
+	mMayaCam.mouseDrag( event.getPos(), event.isLeftDown(), event.isMiddleDown(), event.isRightDown() );
+}
+
+void AssimpApp::resize( ResizeEvent event )
+{
+	CameraPersp cam = mMayaCam.getCamera();
+	cam.setAspectRatio( getWindowAspectRatio() );
+	mMayaCam.setCurrentCam( cam );
 }
 
 CINDER_APP_BASIC( AssimpApp, RendererGl(0) )

@@ -5,17 +5,21 @@
 
 #include "assimp/mesh.h"
 
+#include "cinder/Cinder.h"
 #include "cinder/TriMesh.h"
 #include "cinder/gl/Material.h"
 #include "cinder/gl/Texture.h"
 
 namespace mndl { namespace assimp {
 
+class AssimpMeshHelper;
+typedef std::shared_ptr< AssimpMeshHelper > AssimpMeshHelperRef;
+
 class AssimpMeshHelper
 {
 	public:
 		// pointer to the aiMesh we represent.
-		aiMesh *mAiMesh;
+		const aiMesh *mAiMesh;
 
 /*
 		// VBOs
@@ -29,7 +33,6 @@ class AssimpMeshHelper
 		ci::gl::Material mMaterial;
 /*
 		ofBlendMode blendMode;
-
 */
 		bool mTwoSided;
 		bool mHasChanged;

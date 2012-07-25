@@ -29,6 +29,7 @@
 #include "cinder/Stream.h"
 #include "cinder/AxisAlignedBox.h"
 
+#include "Node.h"
 #include "AssimpMeshHelper.h"
 
 namespace mndl { namespace assimp {
@@ -38,19 +39,39 @@ inline ci::Vec3f fromAssimp( const aiVector3D &v )
     return ci::Vec3f( v.x, v.y, v.z );
 }
 
-inline ci::ColorAf fromAssimp( const aiColor4D &c )
-{
-    return ci::ColorAf( c.r, c.g, c.b, c.a );
-}
-
 inline aiVector3D toAssimp( const ci::Vec3f &v )
 {
     return aiVector3D( v.x, v.y, v.z );
 }
 
+inline ci::Quatf fromAssimp( const aiQuaternion &q )
+{
+    return ci::Quatf( q.w, q.x, q.y, q.z );
+}
+
+inline ci::Matrix44f fromAssimp( const aiMatrix4x4 &m )
+{
+	return ci::Matrix44f( &m.a1, true );
+}
+
+inline aiQuaternion toAssimp( const ci::Quatf &q )
+{
+    return aiQuaternion( q.w, q.v.x, q.v.y, q.v.z );
+}
+
+inline ci::ColorAf fromAssimp( const aiColor4D &c )
+{
+    return ci::ColorAf( c.r, c.g, c.b, c.a );
+}
+
 inline aiColor4D toAssimp( const ci::ColorAf &c )
 {
     return aiColor4D( c.r, c.g, c.b, c.a );
+}
+
+inline std::string fromAssimp( const aiString &s )
+{
+	return std::string( s.C_Str() );
 }
 
 class AssimpLoaderExc : public std::exception
@@ -70,6 +91,17 @@ class AssimpLoaderExc : public std::exception
 		char mMessage[ 513 ];
 };
 
+class AssimpNode : public mndl::Node
+{
+	public:
+		std::vector< AssimpMeshHelperRef > mMeshes;
+
+		// FIXME: test
+		ci::Matrix44f mTransform;
+};
+
+typedef std::shared_ptr< AssimpNode > AssimpNodeRef;
+
 class AssimpLoader
 {
 	public:
@@ -83,8 +115,13 @@ class AssimpLoader
 
 		ci::AxisAlignedBox3f getBoundingBox() const { return mBoundingBox; }
 
+		void enableTextures( bool enable = true ) { mUsingTextures = enable; }
+		void disableTextures() { mUsingTextures = false; }
+
 	private:
-		void loadGlResources();
+		void loadAllMeshes();
+		AssimpNodeRef loadNodes( const aiNode* nd, AssimpNodeRef parentRef = AssimpNodeRef() );
+		AssimpMeshHelperRef convertAiMesh( const aiMesh *mesh );
 
 		void calculateDimensions();
 		void calculateBoundingBox( ci::Vec3f *min, ci::Vec3f *max );
@@ -96,7 +133,10 @@ class AssimpLoader
 
 		ci::AxisAlignedBox3f mBoundingBox;
 
-		std::vector< AssimpMeshHelper > mModelMeshes;
+		AssimpNodeRef mRootNode; /// root node of scene
+
+		std::vector< AssimpNodeRef > mMeshNodes; /// nodes with meshes
+		std::vector< AssimpMeshHelperRef > mModelMeshes; /// all meshes
 
 		bool mUsingMaterials;
 		bool mUsingNormals;

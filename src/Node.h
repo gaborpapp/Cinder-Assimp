@@ -16,8 +16,10 @@ class Node
 	public:
 		Node();
 		Node( const std::string &name );
+		virtual ~Node() {};
 
 		void setParent( NodeRef parent );
+		NodeRef getParent() const;
 
 		void setOrientation( const ci::Quatf &q );
 		const ci::Quatf &getOrientation() const;
@@ -34,6 +36,7 @@ class Node
 		void setInheritScale( bool inherit );
 		bool getInheritScale() const;
 
+		void setName( const std::string &name );
 		const std::string &getName() const;
 
 		void setInitialState();

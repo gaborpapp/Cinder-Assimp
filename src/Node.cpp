@@ -21,6 +21,11 @@ void Node::setParent( NodeRef parent )
 	mParent = parent;
 }
 
+NodeRef Node::getParent() const
+{
+	return mParent;
+}
+
 void Node::setOrientation( const ci::Quatf &q )
 {
 	mOrientation = q;
@@ -70,6 +75,11 @@ void Node::setInheritScale( bool inherit )
 bool Node::getInheritScale() const
 {
 	return mInheritScale;
+}
+
+void Node::setName( const string &name )
+{
+	mName = name;
 }
 
 const string &Node::getName() const

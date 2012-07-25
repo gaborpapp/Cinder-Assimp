@@ -95,7 +95,9 @@ AssimpLoader::AssimpLoader( fs::path filename ) :
 		throw AssimpLoaderExc( mImporterRef->GetErrorString() );
 
 	calculateDimensions();
-	loadGlResources();
+
+	loadAllMeshes();
+	mRootNode = loadNodes( mScene->mRootNode );
 }
 
 AssimpLoader::~AssimpLoader()
@@ -156,143 +158,183 @@ void AssimpLoader::calculateBoundingBoxForNode( const aiNode *nd, aiVector3D *mi
 	*trafo = prev;
 }
 
-void AssimpLoader::loadGlResources()
+AssimpNodeRef AssimpLoader::loadNodes( const aiNode *nd, AssimpNodeRef parentRef )
 {
-	// create new mesh helpers for each mesh, will populate their data later.
-	// modelMeshes.resize(scene->mNumMeshes,ofxAssimpMeshHelper());
+	AssimpNodeRef nodeRef = AssimpNodeRef( new AssimpNode() );
+	nodeRef->setParent( parentRef );
+	nodeRef->setName( fromAssimp( nd->mName ) );
 
-	// create OpenGL buffers and populate them based on each meshes pertinant info.
+	// store transform
+	aiVector3D scaling;
+	aiQuaternion rotation;
+	aiVector3D position;
+	nd->mTransformation.Decompose( scaling, rotation, position );
+	nodeRef->setScale( fromAssimp( scaling ) );
+	nodeRef->setOrientation( fromAssimp( rotation ) );
+	nodeRef->setPosition( fromAssimp( position ) );
+
+	nodeRef->mTransform = fromAssimp( nd->mTransformation );
+
+	// meshes
+	for ( unsigned i = 0; i < nd->mNumMeshes; ++i )
+	{
+		unsigned meshId = nd->mMeshes[ i ];
+		if ( meshId >= mModelMeshes.size() )
+			throw AssimpLoaderExc( "node " + nodeRef->getName() + " references mesh #" +
+					toString< unsigned >( meshId ) + " from " +
+					toString< size_t >( mModelMeshes.size() ) + " meshes." );
+		nodeRef->mMeshes.push_back( mModelMeshes[ meshId ] );
+	}
+
+	// store the node with meshes for rendering
+	if ( nd->mNumMeshes > 0 )
+	{
+		mMeshNodes.push_back( nodeRef );
+	}
+
+	// process all children
+	for ( unsigned n = 0; n < nd->mNumChildren; ++n )
+	{
+		loadNodes( nd->mChildren[ n ], nodeRef );
+	}
+	return nodeRef;
+}
+
+AssimpMeshHelperRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
+{
+	// the current meshHelper we will be populating data into.
+	AssimpMeshHelperRef meshHelperRef = AssimpMeshHelperRef( new AssimpMeshHelper() );
+
+	meshHelperRef->mName = string( mesh->mName.C_Str() );
+
+	// Handle material info
+	aiMaterial *mtl = mScene->mMaterials[ mesh->mMaterialIndex ];
+	aiColor4D dcolor, scolor, acolor, ecolor;
+
+	if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_DIFFUSE, &dcolor ) )
+	{
+		meshHelperRef->mMaterial.setDiffuse( fromAssimp( dcolor ) );
+	}
+
+	if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_SPECULAR, &scolor ) )
+	{
+		meshHelperRef->mMaterial.setSpecular( fromAssimp( scolor ) );
+	}
+
+	if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_AMBIENT, &acolor ) )
+	{
+		meshHelperRef->mMaterial.setAmbient( fromAssimp( acolor ) );
+	}
+
+	if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_EMISSIVE, &ecolor ) )
+	{
+		meshHelperRef->mMaterial.setEmission( fromAssimp( ecolor ) );
+	}
+
+	float shininess;
+	if ( AI_SUCCESS == aiGetMaterialFloat( mtl, AI_MATKEY_SHININESS, &shininess ) )
+	{
+		meshHelperRef->mMaterial.setShininess( shininess );
+	}
+
+#if 0
+	int blendMode;
+	if(AI_SUCCESS == aiGetMaterialInteger(mtl, AI_MATKEY_BLEND_FUNC, &blendMode)){
+		if(blendMode==aiBlendMode_Default){
+			meshHelper.blendMode=OF_BLENDMODE_ALPHA;
+		}else{
+			meshHelper.blendMode=OF_BLENDMODE_ADD;
+		}
+	}
+#endif
+
+	// Culling
+	unsigned int max = 1;
+	int two_sided;
+	if ( ( AI_SUCCESS == aiGetMaterialIntegerArray( mtl, AI_MATKEY_TWOSIDED, &two_sided, &max ) ) && two_sided )
+		meshHelperRef->mTwoSided = true;
+	else
+		meshHelperRef->mTwoSided = false;
+
+	// Load Textures
+	int texIndex = 0;
+	aiString texPath;
+
+	// TODO: handle other aiTextureTypes
+	if ( AI_SUCCESS == mtl->GetTexture( aiTextureType_DIFFUSE, texIndex, &texPath ) )
+	{
+		app::console() << "loading image from " << texPath.data;
+		fs::path texFsPath( texPath.data );
+		fs::path modelFolder = mFilePath.parent_path();
+		fs::path relTexPath = texFsPath.parent_path();
+		fs::path texFile = texFsPath.filename();
+		fs::path realPath = modelFolder / relTexPath / texFile;
+		app::console() << " [" << realPath.string() << "]" << endl;
+
+		// TODO: cache textures
+		meshHelperRef->mTexture = loadImage( realPath );
+	}
+
+	meshHelperRef->mAiMesh = mesh;
+	fromAssimp( mesh, &meshHelperRef->mCachedTriMesh );
+	meshHelperRef->mValidCache = true;
+	meshHelperRef->mHasChanged = false;
+
+	meshHelperRef->mAnimatedPos.resize( mesh->mNumVertices );
+	if ( mesh->HasNormals() )
+	{
+		meshHelperRef->mAnimatedNorm.resize( mesh->mNumVertices );
+	}
+
+#if 0
+
+	int usage;
+	if(getAnimationCount()){
+#ifndef TARGET_OPENGLES
+		usage = GL_STREAM_DRAW;
+#else
+		usage = GL_DYNAMIC_DRAW;
+#endif
+	}else{
+		usage = GL_STATIC_DRAW;
+
+	}
+
+	meshHelper.vbo.setVertexData(&mesh->mVertices[0].x,3,mesh->mNumVertices,usage,sizeof(aiVector3D));
+	if(mesh->HasVertexColors(0)){
+		meshHelper.vbo.setColorData(&mesh->mColors[0][0].r,mesh->mNumVertices,GL_STATIC_DRAW,sizeof(aiColor4D));
+	}
+	if(mesh->HasNormals()){
+		meshHelper.vbo.setNormalData(&mesh->mNormals[0].x,mesh->mNumVertices,usage,sizeof(aiVector3D));
+	}
+	if (meshHelper.cachedMesh.hasTexCoords()){
+		meshHelper.vbo.setTexCoordData(meshHelper.cachedMesh.getTexCoordsPointer()[0].getPtr(),mesh->mNumVertices,GL_STATIC_DRAW,sizeof(ofVec2f));
+	}
+#endif
+
+	meshHelperRef->mIndices.resize( mesh->mNumFaces * 3 );
+	unsigned j = 0;
+	for ( unsigned x = 0; x < mesh->mNumFaces; ++x )
+	{
+		for ( unsigned a = 0; a < mesh->mFaces[x].mNumIndices; ++a)
+		{
+			meshHelperRef->mIndices[ j++ ] = mesh->mFaces[ x ].mIndices[ a ];
+		}
+	}
+
+#if 0
+	meshHelper.vbo.setIndexData(&meshHelper.indices[0],meshHelper.indices.size(),GL_STATIC_DRAW);
+#endif
+	return meshHelperRef;
+}
+
+void AssimpLoader::loadAllMeshes()
+{
 	for ( unsigned i = 0; i < mScene->mNumMeshes; ++i )
 	{
 		app::console() << "loading mesh " << i << endl;
-
-		// current mesh we are introspecting
-		aiMesh *mesh = mScene->mMeshes[ i ];
-
-		// the current meshHelper we will be populating data into.
-		AssimpMeshHelper meshHelper;
-
-		meshHelper.mName = string( mesh->mName.C_Str() );
-
-		// Handle material info
-		aiMaterial *mtl = mScene->mMaterials[ mesh->mMaterialIndex ];
-		aiColor4D dcolor, scolor, acolor, ecolor;
-
-		if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_DIFFUSE, &dcolor ) )
-		{
-			meshHelper.mMaterial.setDiffuse( fromAssimp( dcolor ) );
-		}
-
-		if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_SPECULAR, &scolor ) )
-		{
-			meshHelper.mMaterial.setSpecular( fromAssimp( scolor ) );
-		}
-
-		if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_AMBIENT, &acolor ) )
-		{
-			meshHelper.mMaterial.setAmbient( fromAssimp( acolor ) );
-		}
-
-		if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_EMISSIVE, &ecolor ) )
-		{
-			meshHelper.mMaterial.setEmission( fromAssimp( ecolor ) );
-		}
-
-		float shininess;
-		if ( AI_SUCCESS == aiGetMaterialFloat( mtl, AI_MATKEY_SHININESS, &shininess ) )
-		{
-			meshHelper.mMaterial.setShininess( shininess );
-		}
-
-#if 0
-		int blendMode;
-		if(AI_SUCCESS == aiGetMaterialInteger(mtl, AI_MATKEY_BLEND_FUNC, &blendMode)){
-			if(blendMode==aiBlendMode_Default){
-				meshHelper.blendMode=OF_BLENDMODE_ALPHA;
-			}else{
-				meshHelper.blendMode=OF_BLENDMODE_ADD;
-			}
-		}
-#endif
-
-		// Culling
-		unsigned int max = 1;
-		int two_sided;
-		if ( ( AI_SUCCESS == aiGetMaterialIntegerArray( mtl, AI_MATKEY_TWOSIDED, &two_sided, &max ) ) && two_sided )
-			meshHelper.mTwoSided = true;
-		else
-			meshHelper.mTwoSided = false;
-
-		// Load Textures
-		int texIndex = 0;
-		aiString texPath;
-
-		// TODO: handle other aiTextureTypes
-		if ( AI_SUCCESS == mtl->GetTexture( aiTextureType_DIFFUSE, texIndex, &texPath ) )
-		{
-			app::console() << "loading image from " << texPath.data;
-			fs::path texFsPath( texPath.data );
-			fs::path modelFolder = mFilePath.parent_path();
-			fs::path relTexPath = texFsPath.parent_path();
-			fs::path texFile = texFsPath.filename();
-			fs::path realPath = modelFolder / relTexPath / texFile;
-			app::console() << " [" << realPath.string() << "]" << endl;
-
-			// TODO: cache textures
-			meshHelper.mTexture = loadImage( realPath );
-		}
-
-		meshHelper.mAiMesh = mesh;
-		fromAssimp( mesh, &meshHelper.mCachedTriMesh );
-		meshHelper.mValidCache = true;
-		meshHelper.mHasChanged = false;
-
-		meshHelper.mAnimatedPos.resize( mesh->mNumVertices );
-		if ( mesh->HasNormals() )
-		{
-			meshHelper.mAnimatedNorm.resize( mesh->mNumVertices );
-		}
-
-#if 0
-
-		int usage;
-		if(getAnimationCount()){
-#ifndef TARGET_OPENGLES
-			usage = GL_STREAM_DRAW;
-#else
-			usage = GL_DYNAMIC_DRAW;
-#endif
-		}else{
-			usage = GL_STATIC_DRAW;
-
-		}
-
-		meshHelper.vbo.setVertexData(&mesh->mVertices[0].x,3,mesh->mNumVertices,usage,sizeof(aiVector3D));
-		if(mesh->HasVertexColors(0)){
-			meshHelper.vbo.setColorData(&mesh->mColors[0][0].r,mesh->mNumVertices,GL_STATIC_DRAW,sizeof(aiColor4D));
-		}
-		if(mesh->HasNormals()){
-			meshHelper.vbo.setNormalData(&mesh->mNormals[0].x,mesh->mNumVertices,usage,sizeof(aiVector3D));
-		}
-		if (meshHelper.cachedMesh.hasTexCoords()){
-			meshHelper.vbo.setTexCoordData(meshHelper.cachedMesh.getTexCoordsPointer()[0].getPtr(),mesh->mNumVertices,GL_STATIC_DRAW,sizeof(ofVec2f));
-		}
-#endif
-
-		meshHelper.mIndices.resize( mesh->mNumFaces * 3 );
-		unsigned j = 0;
-		for ( unsigned x = 0; x < mesh->mNumFaces; ++x )
-		{
-			for ( unsigned a = 0; a < mesh->mFaces[x].mNumIndices; ++a)
-			{
-				meshHelper.mIndices[ j++ ] = mesh->mFaces[ x ].mIndices[ a ];
-			}
-		}
-
-#if 0
-		meshHelper.vbo.setIndexData(&meshHelper.indices[0],meshHelper.indices.size(),GL_STATIC_DRAW);
-#endif
-		mModelMeshes.push_back( meshHelper );
+		AssimpMeshHelperRef meshHelperRef = convertAiMesh( mScene->mMeshes[ i ] );
+		mModelMeshes.push_back( meshHelperRef );
 	}
 
 #if 0
@@ -313,52 +355,87 @@ void AssimpLoader::draw()
 	gl::enable( GL_NORMALIZE );
 
 	/*
-	ofPushMatrix();
-
-	ofTranslate(pos);
-
-	ofRotate(180, 0, 0, 1);
-	ofTranslate(-scene_center.x, -scene_center.y, scene_center.z);
-
-	if(normalizeScale)
-	{
-		ofScale(normalizedScale , normalizedScale, normalizedScale);
-	}
-
-	for(int i = 0; i < (int)rotAngle.size(); i++){
-		ofRotate(rotAngle[i], rotAxis[i].x, rotAxis[i].y, rotAxis[i].z);
-	}
-
-	ofScale(scale.x, scale.y, scale.z);
-
-
 	if(getAnimationCount())
 	{
 		updateGLResources();
 	}
 	*/
-	vector< AssimpMeshHelper >::const_iterator it = mModelMeshes.begin();
-	//gl::enableWireframe();
+	vector< AssimpNodeRef >::const_iterator it = mMeshNodes.begin();
+	for ( ; it != mMeshNodes.end(); ++it )
+	{
+		AssimpNodeRef nodeRef = *it;
+
+		gl::pushModelView();
+
+		// TODO: node transform
+		//gl::multModelView( nodeRef->getDerivedTransform() );
+		Matrix44f accTransform;
+
+		AssimpNodeRef nRef = nodeRef;
+		do
+		{
+			accTransform = nRef->mTransform * accTransform;
+			nRef = dynamic_pointer_cast< AssimpNode, Node >( nRef->getParent() );
+		} while ( nRef );
+		gl::multModelView( accTransform );
+
+		vector< AssimpMeshHelperRef >::const_iterator meshIt = nodeRef->mMeshes.begin();
+		for ( ; meshIt != nodeRef->mMeshes.end(); ++meshIt )
+		{
+			AssimpMeshHelperRef meshHelperRef = *meshIt;
+
+			// Texture Binding
+			if ( mUsingTextures && meshHelperRef->mTexture )
+			{
+				meshHelperRef->mTexture.enableAndBind();
+			}
+
+			if ( mUsingMaterials )
+			{
+				meshHelperRef->mMaterial.apply();
+			}
+
+			// Culling
+			if ( meshHelperRef->mTwoSided )
+				gl::enable( GL_CULL_FACE );
+			else
+				gl::disable( GL_CULL_FACE );
+
+			gl::draw( meshHelperRef->mCachedTriMesh );
+
+			// Texture Binding
+			if ( mUsingTextures && meshHelperRef->mTexture )
+			{
+				meshHelperRef->mTexture.unbind();
+			}
+		}
+		gl::popModelView();
+	}
+
+#if 0
+	vector< AssimpMeshHelperRef >::const_iterator it = mModelMeshes.begin();
 	for ( ; it != mModelMeshes.end(); ++it )
 	{
+		AssimpMeshHelperRef meshHelperRef = *it;
+
 		// Texture Binding
-		if ( mUsingTextures && it->mTexture )
+		if ( mUsingTextures && meshHelperRef->mTexture )
 		{
-			it->mTexture.enableAndBind();
+			meshHelperRef->mTexture.enableAndBind();
 		}
 
 		if ( mUsingMaterials )
 		{
-			it->mMaterial.apply();
+			meshHelperRef->mMaterial.apply();
 		}
 
 		// Culling
-		if ( it->mTwoSided )
+		if ( meshHelperRef->mTwoSided )
 			gl::enable( GL_CULL_FACE );
 		else
 			gl::disable( GL_CULL_FACE );
 
-		gl::draw( it->mCachedTriMesh );
+		gl::draw( meshHelperRef->mCachedTriMesh );
 
 		/*
 		ofEnableBlendMode(meshHelper.blendMode);
@@ -380,9 +457,9 @@ void AssimpLoader::draw()
 
 		*/
 		// Texture Binding
-		if ( mUsingTextures && it->mTexture )
+		if ( mUsingTextures && meshHelperRef->mTexture )
 		{
-			it->mTexture.unbind();
+			meshHelperRef->mTexture.unbind();
 		}
 
 		/*
@@ -391,7 +468,7 @@ void AssimpLoader::draw()
 		}
 		*/
 	}
-	gl::disableWireframe();
+#endif
 
 	//ofPopMatrix();
 
