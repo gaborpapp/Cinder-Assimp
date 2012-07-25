@@ -87,12 +87,14 @@ AssimpLoader::AssimpLoader( fs::path filename ) :
 	mUsingColors( true ),
 	mFilePath( filename )
 {
-	unsigned flags = aiProcessPreset_TargetRealtime_MaxQuality |
-					 aiProcess_Triangulate |
-					 aiProcess_FlipUVs;
-	flags |= aiProcess_ImproveCacheLocality | aiProcess_OptimizeGraph |
-			aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices |
-			aiProcess_RemoveRedundantMaterials;
+	// FIXME: aiProcessPreset_TargetRealtime_MaxQuality contains
+	// aiProcess_Debone which is buggy in 3.0.1270
+	unsigned flags = aiProcess_Triangulate |
+					 aiProcess_FlipUVs |
+					 aiProcessPreset_TargetRealtime_Quality |
+					 aiProcess_FindInstances |
+					 aiProcess_ValidateDataStructure |
+					 aiProcess_OptimizeMeshes;
 
 	mImporterRef = shared_ptr< Assimp::Importer >( new Assimp::Importer() );
 	/*

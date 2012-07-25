@@ -19,16 +19,16 @@
 
 #include <vector>
 
-//* 2.0
+/* 2.0
 #include "assimp/assimp.hpp"
 #include "assimp/aiScene.h"
 #include "assimp/aiPostProcess.h"
-//*/
-/* 3.0
+*/
+//* 3.0
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
-*/
+//*/
 
 #include "cinder/Cinder.h"
 #include "cinder/Color.h"
