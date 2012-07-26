@@ -68,7 +68,7 @@ void AssimpApp::prepareSettings( Settings *settings )
 
 void AssimpApp::setup()
 {
-	mAssimpLoader = assimp::AssimpLoader( getAssetPath( "seymour.dae" ) );
+	mAssimpLoader = assimp::AssimpLoader( getAssetPath( "astroboy_walk.dae" ) );
 
 	CameraPersp cam;
 	cam.setPerspective( 60, getWindowAspectRatio(), 0.1f, 1000.0f );
