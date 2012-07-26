@@ -134,8 +134,10 @@ class AssimpLoader
 
 		ci::AxisAlignedBox3f getBoundingBox() const { return mBoundingBox; }
 
-		void setNodeOrientation( std::string name, const ci::Quatf &rot );
-		ci::Quatf getNodeOrientation( std::string name );
+		void setNodeOrientation( const std::string &name, const ci::Quatf &rot );
+		ci::Quatf getNodeOrientation( const std::string &name );
+
+		AssimpNodeRef getAssimpNode( const std::string &name );
 
 		const std::vector< std::string > &getNodeNames() { return mNodeNames; }
 
@@ -174,8 +176,6 @@ class AssimpLoader
 
 		std::vector< std::string > mNodeNames;
 		std::map< std::string, AssimpNodeRef > mNodeMap;
-
-		AssimpNodeRef findAssimpNode( const std::string &name );
 
 		bool mUsingMaterials;
 		bool mUsingNormals;

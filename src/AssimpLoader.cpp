@@ -378,7 +378,7 @@ void AssimpLoader::updateAnimation()
 
 		// TODO: change this to AssimpNode
 		//aiNode *targetNode = mScene->mRootNode->FindNode( channel->mNodeName );
-		AssimpNodeRef targetNode = findAssimpNode( fromAssimp( channel->mNodeName ) );
+		AssimpNodeRef targetNode = getAssimpNode( fromAssimp( channel->mNodeName ) );
 
 		// ******** Position *****
 		aiVector3D presentPosition( 0, 0, 0 );
@@ -475,7 +475,7 @@ void AssimpLoader::updateAnimation()
 	}
 }
 
-AssimpNodeRef AssimpLoader::findAssimpNode( const std::string &name )
+AssimpNodeRef AssimpLoader::getAssimpNode( const std::string &name )
 {
 	map< string, AssimpNodeRef >::iterator i = mNodeMap.find( name );
 	if ( i != mNodeMap.end() )
@@ -484,16 +484,16 @@ AssimpNodeRef AssimpLoader::findAssimpNode( const std::string &name )
 		return AssimpNodeRef();
 }
 
-void AssimpLoader::setNodeOrientation( string name, const Quatf &rot )
+void AssimpLoader::setNodeOrientation( const string &name, const Quatf &rot )
 {
-	AssimpNodeRef node = findAssimpNode( name );
+	AssimpNodeRef node = getAssimpNode( name );
 	if ( node )
 		node->setOrientation( rot );
 }
 
-Quatf AssimpLoader::getNodeOrientation( string name )
+Quatf AssimpLoader::getNodeOrientation( const string &name )
 {
-	AssimpNodeRef node = findAssimpNode( name );
+	AssimpNodeRef node = getAssimpNode( name );
 	if ( node )
 		return node->getOrientation();
 	else
@@ -523,7 +523,7 @@ void AssimpLoader::updateSkinning()
 
 				// find the corresponding node by again looking recursively through
 				// the node hierarchy for the same name
-				AssimpNodeRef nodeRef = findAssimpNode( fromAssimp( bone->mName ) );
+				AssimpNodeRef nodeRef = getAssimpNode( fromAssimp( bone->mName ) );
 				assert( nodeRef );
 				boneMatrices[ a ] = toAssimp( nodeRef->getDerivedTransform() ) *
 										bone->mOffsetMatrix;
