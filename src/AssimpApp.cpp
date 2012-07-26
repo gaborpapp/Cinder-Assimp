@@ -18,11 +18,11 @@
 #include "cinder/Cinder.h"
 #include "cinder/app/AppBasic.h"
 #include "cinder/ImageIo.h"
-#include "cinder/gl/Light.h"
 #include "cinder/TriMesh.h"
 #include "cinder/Camera.h"
 #include "cinder/MayaCamUI.h"
 #include "cinder/gl/Texture.h"
+#include "cinder/gl/Light.h"
 #include "cinder/params/Params.h"
 
 #include "AssimpLoader.h"
@@ -55,6 +55,7 @@ class AssimpApp : public AppBasic
 		bool mEnableTextures;
 		bool mEnableWireframe;
 		bool mEnableSkinning;
+		bool mEnableAnimation;
 		bool mDrawBBox;
 		float mFps;
 };
@@ -69,12 +70,13 @@ void AssimpApp::setup()
 {
 	//mAssimpLoader = assimp::AssimpLoader( getAssetPath( "seymour.dae" ) );
 	mAssimpLoader = assimp::AssimpLoader( getAssetPath( "astroboy_walk.dae" ) );
+	//mAssimpLoader = assimp::AssimpLoader( getAssetPath( "scene.obj" ) );
 	//mAssimpLoader = assimp::AssimpLoader( getAssetPath( "player_249_1833.dae" ) );
 
 	CameraPersp cam;
 	cam.setPerspective( 60, getWindowAspectRatio(), 0.1f, 1000.0f );
-	cam.setEyePoint( Vec3f( 0, 5, 20 ) );
-	cam.setCenterOfInterestPoint( Vec3f( 0, 5, 0 ) );
+	cam.setEyePoint( Vec3f( 0, 7, 20 ) );
+	cam.setCenterOfInterestPoint( Vec3f( 0, 7, 0 ) );
 	mMayaCam.setCurrentCam( cam );
 
 	mParams = params::InterfaceGl( "Parameters", Vec2i( 200, 300 ) );
@@ -84,6 +86,8 @@ void AssimpApp::setup()
 	mParams.addParam( "Textures", &mEnableTextures );
 	mEnableSkinning = true;
 	mParams.addParam( "Skinning", &mEnableSkinning );
+	mEnableAnimation = false;
+	mParams.addParam( "Animation", &mEnableAnimation );
 	mDrawBBox = false;
 	mParams.addParam( "Bounding box", &mDrawBBox );
 	mParams.addSeparator();
@@ -92,6 +96,12 @@ void AssimpApp::setup()
 
 void AssimpApp::update()
 {
+	mAssimpLoader.enableTextures( mEnableTextures );
+	mAssimpLoader.enableSkinning( mEnableSkinning );
+	mAssimpLoader.enableAnimation( mEnableAnimation );
+
+	mAssimpLoader.update();
+
 	mFps = getAverageFps();
 }
 
@@ -104,15 +114,23 @@ void AssimpApp::draw()
 	gl::enableDepthWrite();
 	gl::enableDepthRead();
 
-	//gl::rotate( Vec3f( 0, getElapsedSeconds() * 20, 0 ) );
 	gl::color( Color::white() );
 
 	if ( mEnableWireframe )
 		gl::enableWireframe();
-	mAssimpLoader.enableTextures( mEnableTextures );
-	mAssimpLoader.enableSkinning( mEnableSkinning );
+	gl::Light light( gl::Light::DIRECTIONAL, 0 );
+	light.setAmbient( Color::white() );
+	light.setDiffuse( Color::white() );
+	light.setSpecular( Color::white() );
+	light.lookAt( Vec3f( 0, 5, -20 ), Vec3f( 0, 5, 0 ) );
+	light.update( mMayaCam.getCamera() );
+	light.enable();
+
+	gl::enable( GL_LIGHTING );
+	gl::enable( GL_NORMALIZE );
 
 	mAssimpLoader.draw();
+	gl::disable( GL_LIGHTING );
 
 	if ( mEnableWireframe )
 		gl::disableWireframe();

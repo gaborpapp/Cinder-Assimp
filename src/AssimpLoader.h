@@ -126,6 +126,7 @@ class AssimpLoader
 		AssimpLoader( ci::fs::path filename );
 		~AssimpLoader();
 
+		void update();
 		void draw();
 
 		ci::AxisAlignedBox3f getBoundingBox() const { return mBoundingBox; }
@@ -133,8 +134,11 @@ class AssimpLoader
 		void enableTextures( bool enable = true ) { mUsingTextures = enable; }
 		void disableTextures() { mUsingTextures = false; }
 
-		void enableSkinning( bool enable = true ) { mEnableSkinning = enable; }
-		void disableSkinning() { mEnableSkinning = false; }
+		void enableSkinning( bool enable = true );
+		void disableSkinning() { enableSkinning( false ); }
+
+		void enableAnimation( bool enable = true ) { mEnableAnimation = enable; }
+		void disableAnimation() { mEnableAnimation = false; }
 
 	private:
 		void loadAllMeshes();
@@ -144,6 +148,10 @@ class AssimpLoader
 		void calculateDimensions();
 		void calculateBoundingBox( ci::Vec3f *min, ci::Vec3f *max );
 		void calculateBoundingBoxForNode( const aiNode *nd, aiVector3D *min, aiVector3D *max, aiMatrix4x4 *trafo );
+
+		void updateAnimation();
+		void updateSkinning();
+		void updateMeshes();
 
 		std::shared_ptr< Assimp::Importer > mImporterRef; // mScene will be destroyed along with the Importer object
 		ci::fs::path mFilePath; /// model path
@@ -161,6 +169,7 @@ class AssimpLoader
 		bool mUsingTextures;
 		bool mUsingColors;
 		bool mEnableSkinning;
+		bool mEnableAnimation;
 };
 
 } } // namespace mndl::assimp

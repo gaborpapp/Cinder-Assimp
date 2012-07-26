@@ -29,8 +29,6 @@ namespace mndl { namespace assimp {
 
 static void fromAssimp( const aiMesh *aim, TriMesh *cim )
 {
-	app::console() << fromAssimp( aim->mVertices[0] ) << endl;
-	app::console() << aim->mVertices[0].x << ", " << aim->mVertices[0].y << aim->mVertices[0].z << endl;
 	// copy vertices
 	for ( unsigned i = 0; i < aim->mNumVertices; ++i )
 	{
@@ -85,6 +83,8 @@ AssimpLoader::AssimpLoader( fs::path filename ) :
 	mUsingNormals( true ),
 	mUsingTextures( true ),
 	mUsingColors( true ),
+	mEnableSkinning( true ),
+	mEnableAnimation( false ),
 	mFilePath( filename )
 {
 	// FIXME: aiProcessPreset_TargetRealtime_MaxQuality contains
@@ -97,11 +97,9 @@ AssimpLoader::AssimpLoader( fs::path filename ) :
 					 aiProcess_OptimizeMeshes;
 
 	mImporterRef = shared_ptr< Assimp::Importer >( new Assimp::Importer() );
-	/*
 	mImporterRef->SetPropertyInteger( AI_CONFIG_PP_SBP_REMOVE,
 			aiPrimitiveType_LINE | aiPrimitiveType_POINT );
 	mImporterRef->SetPropertyInteger( AI_CONFIG_PP_PTV_NORMALIZE, true );
-	*/
 
 	mScene = mImporterRef->ReadFile( filename.string(), flags );
 	if ( !mScene )
@@ -205,7 +203,6 @@ AssimpNodeRef AssimpLoader::loadNodes( const aiNode *nd, AssimpNodeRef parentRef
 	// store the node with meshes for rendering
 	if ( nd->mNumMeshes > 0 )
 	{
-		app::console() << "adding mesh node " << nodeRef->getName() << endl;
 		mMeshNodes.push_back( nodeRef );
 	}
 
@@ -351,13 +348,6 @@ void AssimpLoader::loadAllMeshes()
 	{
 		app::console() << "loading mesh " << i << endl;
 		AssimpMeshHelperRef meshHelperRef = convertAiMesh( mScene->mMeshes[ i ] );
-
-		if ( i == 1 )
-		{
-				std::vector< Vec3f > &vertices = meshHelperRef->mCachedTriMesh.getVertices();
-				app::console() << vertices[0] << " " << vertices.size() << endl;
-		}
-
 		mModelMeshes.push_back( meshHelperRef );
 	}
 
@@ -369,237 +359,217 @@ void AssimpLoader::loadAllMeshes()
 	app::console() << "finished loading gl resources" << endl;
 }
 
-void AssimpLoader::draw()
+void AssimpLoader::updateAnimation()
 {
-	//ofPushStyle();
+	if ( mScene->mNumAnimations == 0 )
+		return;
 
-	glPushAttrib( GL_ALL_ATTRIB_BITS );
-	glPushClientAttrib( GL_CLIENT_ALL_ATTRIB_BITS );
-	//glPolygonMode(GL_FRONT_AND_BACK, ofGetGLPolyMode(renderType));
-	gl::enable( GL_NORMALIZE );
+	// TODO: set this by caller, this for test only
+	unsigned animationIndex = 0;
+	float currentTime = math<float>::fmod( app::getElapsedSeconds(), 5.f ) / 5.f;
 
-	/*
-	if(getAnimationCount())
+	const aiAnimation *mAnim = mScene->mAnimations[ animationIndex ];
+
+	// calculate the transformations for each animation channel
+	for( unsigned int a = 0; a < mAnim->mNumChannels; a++ )
 	{
-		updateGLResources();
-	}
-	*/
-	//----
-	if ( mScene->mNumAnimations > 0 )
-	{
-		unsigned animationIndex = 0;
-		float currentTime = math<float>::fmod( app::getElapsedSeconds(), 5.f ) / 5.f;
-		const aiAnimation* mAnim = mScene->mAnimations[animationIndex];
+		const aiNodeAnim *channel = mAnim->mChannels[ a ];
 
-		// calculate the transformations for each animation channel
-		for( unsigned int a = 0; a < mAnim->mNumChannels; a++)
+		// TODO: change this to AssimpNode
+		aiNode *targetNode = mScene->mRootNode->FindNode( channel->mNodeName );
+
+		// ******** Position *****
+		aiVector3D presentPosition( 0, 0, 0 );
+		if( channel->mNumPositionKeys > 0 )
 		{
-			const aiNodeAnim* channel = mAnim->mChannels[a];
-
-			aiNode* targetNode = mScene->mRootNode->FindNode(channel->mNodeName);
-
-			// ******** Position *****
-			aiVector3D presentPosition( 0, 0, 0);
-			if( channel->mNumPositionKeys > 0)
+			// Look for present frame number. Search from last position if time is after the last time, else from beginning
+			// Should be much quicker than always looking from start for the average use case.
+			unsigned int frame = 0;// (currentTime >= lastAnimationTime) ? lastFramePositionIndex : 0;
+			while( frame < channel->mNumPositionKeys - 1)
 			{
-				// Look for present frame number. Search from last position if time is after the last time, else from beginning
-				// Should be much quicker than always looking from start for the average use case.
-				unsigned int frame = 0;// (currentTime >= lastAnimationTime) ? lastFramePositionIndex : 0;
-				while( frame < channel->mNumPositionKeys - 1)
-				{
-					if( currentTime < channel->mPositionKeys[frame+1].mTime)
-						break;
-					frame++;
-				}
-
-				// interpolate between this frame's value and next frame's value
-				unsigned int nextFrame = (frame + 1) % channel->mNumPositionKeys;
-				const aiVectorKey& key = channel->mPositionKeys[frame];
-				const aiVectorKey& nextKey = channel->mPositionKeys[nextFrame];
-				double diffTime = nextKey.mTime - key.mTime;
-				if( diffTime < 0.0)
-					diffTime += mAnim->mDuration;
-				if( diffTime > 0)
-				{
-					float factor = float( (currentTime - key.mTime) / diffTime);
-					presentPosition = key.mValue + (nextKey.mValue - key.mValue) * factor;
-				} else
-				{
-					presentPosition = key.mValue;
-				}
+				if( currentTime < channel->mPositionKeys[frame+1].mTime)
+					break;
+				frame++;
 			}
 
-			// ******** Rotation *********
-			aiQuaternion presentRotation( 1, 0, 0, 0);
-			if( channel->mNumRotationKeys > 0)
+			// interpolate between this frame's value and next frame's value
+			unsigned int nextFrame = (frame + 1) % channel->mNumPositionKeys;
+			const aiVectorKey& key = channel->mPositionKeys[frame];
+			const aiVectorKey& nextKey = channel->mPositionKeys[nextFrame];
+			double diffTime = nextKey.mTime - key.mTime;
+			if( diffTime < 0.0)
+				diffTime += mAnim->mDuration;
+			if( diffTime > 0)
 			{
-				unsigned int frame = 0;//(currentTime >= lastAnimationTime) ? lastFrameRotationIndex : 0;
-				while( frame < channel->mNumRotationKeys - 1)
-				{
-					if( currentTime < channel->mRotationKeys[frame+1].mTime)
-						break;
-					frame++;
-				}
-
-				// interpolate between this frame's value and next frame's value
-				unsigned int nextFrame = (frame + 1) % channel->mNumRotationKeys;
-				const aiQuatKey& key = channel->mRotationKeys[frame];
-				const aiQuatKey& nextKey = channel->mRotationKeys[nextFrame];
-				double diffTime = nextKey.mTime - key.mTime;
-				if( diffTime < 0.0)
-					diffTime += mAnim->mDuration;
-				if( diffTime > 0)
-				{
-					float factor = float( (currentTime - key.mTime) / diffTime);
-					aiQuaternion::Interpolate( presentRotation, key.mValue, nextKey.mValue, factor);
-				} else
-				{
-					presentRotation = key.mValue;
-				}
-			}
-
-			// ******** Scaling **********
-			aiVector3D presentScaling( 1, 1, 1);
-			if( channel->mNumScalingKeys > 0)
+				float factor = float( (currentTime - key.mTime) / diffTime);
+				presentPosition = key.mValue + (nextKey.mValue - key.mValue) * factor;
+			} else
 			{
-				unsigned int frame = 0;//(currentTime >= lastAnimationTime) ? lastFrameScaleIndex : 0;
-				while( frame < channel->mNumScalingKeys - 1)
-				{
-					if( currentTime < channel->mScalingKeys[frame+1].mTime)
-						break;
-					frame++;
-				}
-
-				// TODO: (thom) interpolation maybe? This time maybe even logarithmic, not linear
-				presentScaling = channel->mScalingKeys[frame].mValue;
+				presentPosition = key.mValue;
 			}
-
-			// build a transformation matrix from it
-			//aiMatrix4x4& mat;// = mTransforms[a];
-			aiMatrix4x4 mat = aiMatrix4x4( presentRotation.GetMatrix());
-			mat.a1 *= presentScaling.x; mat.b1 *= presentScaling.x; mat.c1 *= presentScaling.x;
-			mat.a2 *= presentScaling.y; mat.b2 *= presentScaling.y; mat.c2 *= presentScaling.y;
-			mat.a3 *= presentScaling.z; mat.b3 *= presentScaling.z; mat.c3 *= presentScaling.z;
-			mat.a4 = presentPosition.x; mat.b4 = presentPosition.y; mat.c4 = presentPosition.z;
-			//mat.Transpose();
-
-			targetNode->mTransformation = mat;
-
 		}
-	}
-	//----
 
+		// ******** Rotation *********
+		aiQuaternion presentRotation( 1, 0, 0, 0);
+		if( channel->mNumRotationKeys > 0)
+		{
+			unsigned int frame = 0;//(currentTime >= lastAnimationTime) ? lastFrameRotationIndex : 0;
+			while( frame < channel->mNumRotationKeys - 1)
+			{
+				if( currentTime < channel->mRotationKeys[frame+1].mTime)
+					break;
+				frame++;
+			}
+
+			// interpolate between this frame's value and next frame's value
+			unsigned int nextFrame = (frame + 1) % channel->mNumRotationKeys;
+			const aiQuatKey& key = channel->mRotationKeys[frame];
+			const aiQuatKey& nextKey = channel->mRotationKeys[nextFrame];
+			double diffTime = nextKey.mTime - key.mTime;
+			if( diffTime < 0.0)
+				diffTime += mAnim->mDuration;
+			if( diffTime > 0)
+			{
+				float factor = float( (currentTime - key.mTime) / diffTime);
+				aiQuaternion::Interpolate( presentRotation, key.mValue, nextKey.mValue, factor);
+			} else
+			{
+				presentRotation = key.mValue;
+			}
+		}
+
+		// ******** Scaling **********
+		aiVector3D presentScaling( 1, 1, 1);
+		if( channel->mNumScalingKeys > 0)
+		{
+			unsigned int frame = 0;//(currentTime >= lastAnimationTime) ? lastFrameScaleIndex : 0;
+			while( frame < channel->mNumScalingKeys - 1)
+			{
+				if( currentTime < channel->mScalingKeys[frame+1].mTime)
+					break;
+				frame++;
+			}
+
+			// TODO: (thom) interpolation maybe? This time maybe even logarithmic, not linear
+			presentScaling = channel->mScalingKeys[frame].mValue;
+		}
+
+		// build a transformation matrix from it
+		//aiMatrix4x4& mat;// = mTransforms[a];
+		aiMatrix4x4 mat = aiMatrix4x4( presentRotation.GetMatrix());
+		mat.a1 *= presentScaling.x; mat.b1 *= presentScaling.x; mat.c1 *= presentScaling.x;
+		mat.a2 *= presentScaling.y; mat.b2 *= presentScaling.y; mat.c2 *= presentScaling.y;
+		mat.a3 *= presentScaling.z; mat.b3 *= presentScaling.z; mat.c3 *= presentScaling.z;
+		mat.a4 = presentPosition.x; mat.b4 = presentPosition.y; mat.c4 = presentPosition.z;
+		//mat.Transpose();
+
+		// TODO: change this to AssimpNode
+		targetNode->mTransformation = mat;
+	}
+}
+
+void AssimpLoader::updateSkinning()
+{
 	vector< AssimpNodeRef >::const_iterator it = mMeshNodes.begin();
-	int mId = 0;
-	for ( ; it != mMeshNodes.end(); ++it, mId++ )
+	for ( ; it != mMeshNodes.end(); ++it )
 	{
 		AssimpNodeRef nodeRef = *it;
-
-		gl::pushModelView();
-
-		// TODO: node transform
-		//gl::multModelView( nodeRef->getDerivedTransform() );
-		/*
-		Matrix44f accTransform;
-		AssimpNodeRef nRef = nodeRef;
-		do
-		{
-			accTransform = nRef->mTransform * accTransform;
-			nRef = dynamic_pointer_cast< AssimpNode, Node >( nRef->getParent() );
-		} while ( nRef );
-		gl::multModelView( accTransform );
-		*/
-
-		/*
-		const aiNode *nd = nodeRef->mAiNode;
-		aiMatrix4x4 trafo;
-		while ( nd != NULL )
-		{
-			//trafo = trafo * nd->mTransformation;
-			trafo = nd->mTransformation * trafo;
-			nd = nd->mParent;
-		};
-		gl::multModelView( fromAssimp( trafo ) );
-		//gl::multModelView( fromAssimp( nodeRef->mAiNode->mTransformation ) );
-		*/
 
 		vector< AssimpMeshHelperRef >::const_iterator meshIt = nodeRef->mMeshes.begin();
 		for ( ; meshIt != nodeRef->mMeshes.end(); ++meshIt )
 		{
 			AssimpMeshHelperRef meshHelperRef = *meshIt;
 
+			// current mesh we are introspecting
+			const aiMesh *mesh = meshHelperRef->mAiMesh;
+
+			// calculate bone matrices
+			std::vector< aiMatrix4x4 > boneMatrices( mesh->mNumBones );
+			for ( unsigned a = 0; a < mesh->mNumBones; ++a )
+			{
+				const aiBone *bone = mesh->mBones[ a ];
+
+				// find the corresponding node by again looking recursively through
+				// the node hierarchy for the same name
+				// TODO: change this to AssimpNode
+				aiNode *node = mScene->mRootNode->FindNode( bone->mName );
+
+				// start with the mesh-to-bone matrix
+				boneMatrices[ a ] = bone->mOffsetMatrix;
+				// and now append all node transformations down the parent chain until
+				// we're back at mesh coordinates again
+				const aiNode *tempNode = node;
+				while( tempNode )
+				{
+					// check your matrix multiplication order here!!!
+					boneMatrices[ a ] = tempNode->mTransformation * boneMatrices[ a ];
+					tempNode = tempNode->mParent;
+				}
+			}
+
+			meshHelperRef->mHasChanged = true;
+			meshHelperRef->mValidCache = false;
+
+			meshHelperRef->mAnimatedPos.assign( meshHelperRef->mAnimatedPos.size(),
+					aiVector3D( 0, 0, 0 ) );
+			if ( mesh->HasNormals() )
+			{
+				meshHelperRef->mAnimatedNorm.assign( meshHelperRef->mAnimatedNorm.size(),
+						aiVector3D( 0, 0, 0 ) );
+			}
+
+			// loop through all vertex weights of all bones
+			for ( unsigned a = 0; a < mesh->mNumBones; ++a )
+			{
+				const aiBone *bone = mesh->mBones[a];
+				const aiMatrix4x4 &posTrafo = boneMatrices[ a ];
+
+				for ( unsigned b = 0; b < bone->mNumWeights; ++b )
+				{
+					const aiVertexWeight &weight = bone->mWeights[ b ];
+					size_t vertexId = weight.mVertexId;
+					const aiVector3D& srcPos = mesh->mVertices[vertexId];
+
+					meshHelperRef->mAnimatedPos[vertexId] += weight.mWeight * (posTrafo * srcPos);
+				}
+
+				if(mesh->HasNormals())
+				{
+					// 3x3 matrix, contains the bone matrix without the
+					// translation, only with rotation and possibly scaling
+					aiMatrix3x3 normTrafo = aiMatrix3x3( posTrafo );
+					for ( size_t b = 0; b < bone->mNumWeights; ++b )
+					{
+						const aiVertexWeight& weight = bone->mWeights[b];
+						size_t vertexId = weight.mVertexId;
+
+						const aiVector3D& srcNorm = mesh->mNormals[vertexId];
+						meshHelperRef->mAnimatedNorm[vertexId] += weight.mWeight * (normTrafo * srcNorm);
+					}
+				}
+			}
+		}
+	}
+}
+
+void AssimpLoader::updateMeshes()
+{
+	vector< AssimpNodeRef >::iterator it = mMeshNodes.begin();
+	for ( ; it != mMeshNodes.end(); ++it )
+	{
+		AssimpNodeRef nodeRef = *it;
+
+		vector< AssimpMeshHelperRef >::iterator meshIt = nodeRef->mMeshes.begin();
+		for ( ; meshIt != nodeRef->mMeshes.end(); ++meshIt )
+		{
+			AssimpMeshHelperRef meshHelperRef = *meshIt;
+
+			if ( meshHelperRef->mValidCache )
+				continue;
+
 			if ( mEnableSkinning )
 			{
-				// ------------------------------------
-				// current mesh we are introspecting
-				const aiMesh *mesh = meshHelperRef->mAiMesh;
-
-				// calculate bone matrices
-				std::vector< aiMatrix4x4 > boneMatrices( mesh->mNumBones );
-				for ( unsigned a = 0; a < mesh->mNumBones; ++a )
-				{
-					const aiBone *bone = mesh->mBones[ a ];
-
-					// find the corresponding node by again looking recursively through
-					// the node hierarchy for the same name
-					aiNode *node = mScene->mRootNode->FindNode( bone->mName );
-
-					// start with the mesh-to-bone matrix
-					boneMatrices[ a ] = bone->mOffsetMatrix;
-					// and now append all node transformations down the parent chain until
-					// we're back at mesh coordinates again
-					const aiNode *tempNode = node;
-					while( tempNode )
-					{
-						// check your matrix multiplication order here!!!
-						boneMatrices[ a ] = tempNode->mTransformation * boneMatrices[ a ];
-						tempNode = tempNode->mParent;
-					}
-				}
-
-				meshHelperRef->mHasChanged = true;
-				meshHelperRef->mValidCache = false;
-
-				meshHelperRef->mAnimatedPos.assign( meshHelperRef->mAnimatedPos.size(),
-						aiVector3D( 0, 0, 0 ) );
-				if ( mesh->HasNormals() )
-				{
-					meshHelperRef->mAnimatedNorm.assign( meshHelperRef->mAnimatedNorm.size(),
-							aiVector3D( 0, 0, 0 ) );
-				}
-
-				// loop through all vertex weights of all bones
-				for ( unsigned a = 0; a < mesh->mNumBones; ++a )
-				{
-					const aiBone *bone = mesh->mBones[a];
-					const aiMatrix4x4 &posTrafo = boneMatrices[ a ];
-
-					for ( unsigned b = 0; b < bone->mNumWeights; ++b )
-					{
-						const aiVertexWeight &weight = bone->mWeights[ b ];
-						size_t vertexId = weight.mVertexId;
-						const aiVector3D& srcPos = mesh->mVertices[vertexId];
-
-						meshHelperRef->mAnimatedPos[vertexId] += weight.mWeight * (posTrafo * srcPos);
-					}
-
-					if(mesh->HasNormals())
-					{
-						// 3x3 matrix, contains the bone matrix without the
-						// translation, only with rotation and possibly scaling
-						aiMatrix3x3 normTrafo = aiMatrix3x3( posTrafo );
-						for ( size_t b = 0; b < bone->mNumWeights; ++b )
-						{
-							const aiVertexWeight& weight = bone->mWeights[b];
-							size_t vertexId = weight.mVertexId;
-
-							const aiVector3D& srcNorm = mesh->mNormals[vertexId];
-							meshHelperRef->mAnimatedNorm[vertexId] += weight.mWeight * (normTrafo * srcNorm);
-						}
-					}
-				}
-
-				// update slow
+				// animated data
 				std::vector< Vec3f > &vertices = meshHelperRef->mCachedTriMesh.getVertices();
 				for( size_t v = 0; v < vertices.size(); ++v )
 					vertices[v] = fromAssimp( meshHelperRef->mAnimatedPos[ v ] );
@@ -610,9 +580,9 @@ void AssimpLoader::draw()
 			}
 			else
 			{
+				// original mesh data from assimp
 				const aiMesh *mesh = meshHelperRef->mAiMesh;
 
-				// update slow
 				std::vector< Vec3f > &vertices = meshHelperRef->mCachedTriMesh.getVertices();
 				for( size_t v = 0; v < vertices.size(); ++v )
 					vertices[v] = fromAssimp( mesh->mVertices[ v ] );
@@ -622,12 +592,58 @@ void AssimpLoader::draw()
 					normals[v] = fromAssimp( mesh->mNormals[ v ] );
 			}
 
-			// ------------------------------------
-			if ( mId == 1 )
-			{
-				std::vector< Vec3f > &vertices = meshHelperRef->mCachedTriMesh.getVertices();
-				app::console() << vertices[0] << " " << vertices.size() << endl;
-			}
+			meshHelperRef->mValidCache = true;
+		}
+	}
+}
+
+void AssimpLoader::enableSkinning( bool enable /* = true */ )
+{
+	if ( mEnableSkinning == enable )
+		return;
+
+	mEnableSkinning = enable;
+	// invalidate mesh cache
+	vector< AssimpNodeRef >::const_iterator it = mMeshNodes.begin();
+	for ( ; it != mMeshNodes.end(); ++it )
+	{
+		AssimpNodeRef nodeRef = *it;
+
+		vector< AssimpMeshHelperRef >::const_iterator meshIt = nodeRef->mMeshes.begin();
+		for ( ; meshIt != nodeRef->mMeshes.end(); ++meshIt )
+		{
+			AssimpMeshHelperRef meshHelperRef = *meshIt;
+			meshHelperRef->mValidCache = false;
+		}
+	}
+}
+
+void AssimpLoader::update()
+{
+	if ( mEnableAnimation )
+		updateAnimation();
+
+	if ( mEnableSkinning )
+		updateSkinning();
+
+	updateMeshes();
+}
+
+void AssimpLoader::draw()
+{
+	glPushAttrib( GL_ALL_ATTRIB_BITS );
+	glPushClientAttrib( GL_CLIENT_ALL_ATTRIB_BITS );
+	gl::enable( GL_NORMALIZE );
+
+	vector< AssimpNodeRef >::const_iterator it = mMeshNodes.begin();
+	for ( ; it != mMeshNodes.end(); ++it )
+	{
+		AssimpNodeRef nodeRef = *it;
+
+		vector< AssimpMeshHelperRef >::const_iterator meshIt = nodeRef->mMeshes.begin();
+		for ( ; meshIt != nodeRef->mMeshes.end(); ++meshIt )
+		{
+			AssimpMeshHelperRef meshHelperRef = *meshIt;
 
 			// Texture Binding
 			if ( mUsingTextures && meshHelperRef->mTexture )
@@ -654,72 +670,11 @@ void AssimpLoader::draw()
 				meshHelperRef->mTexture.unbind();
 			}
 		}
-		gl::popModelView();
 	}
 
-#if 0
-	vector< AssimpMeshHelperRef >::const_iterator it = mModelMeshes.begin();
-	for ( ; it != mModelMeshes.end(); ++it )
-	{
-		AssimpMeshHelperRef meshHelperRef = *it;
-
-		// Texture Binding
-		if ( mUsingTextures && meshHelperRef->mTexture )
-		{
-			meshHelperRef->mTexture.enableAndBind();
-		}
-
-		if ( mUsingMaterials )
-		{
-			meshHelperRef->mMaterial.apply();
-		}
-
-		// Culling
-		if ( meshHelperRef->mTwoSided )
-			gl::enable( GL_CULL_FACE );
-		else
-			gl::disable( GL_CULL_FACE );
-
-		gl::draw( meshHelperRef->mCachedTriMesh );
-
-		/*
-		ofEnableBlendMode(meshHelper.blendMode);
-#ifndef TARGET_OPENGLES
-		meshHelper.vbo.drawElements(GL_TRIANGLES,meshHelper.indices.size());
-#else
-		switch(renderType){
-			case OF_MESH_FILL:
-				meshHelper.vbo.drawElements(GL_TRIANGLES,meshHelper.indices.size());
-				break;
-			case OF_MESH_WIREFRAME:
-				meshHelper.vbo.drawElements(GL_LINES,meshHelper.indices.size());
-				break;
-			case OF_MESH_POINTS:
-				meshHelper.vbo.drawElements(GL_POINTS,meshHelper.indices.size());
-				break;
-		}
-#endif
-
-		*/
-		// Texture Binding
-		if ( mUsingTextures && meshHelperRef->mTexture )
-		{
-			meshHelperRef->mTexture.unbind();
-		}
-
-		/*
-		if(bUsingMaterials){
-			meshHelper.material.end();
-		}
-		*/
-	}
-#endif
-
-	//ofPopMatrix();
 
 	glPopClientAttrib();
 	glPopAttrib();
-	//ofPopStyle();
 }
 
 } } // namespace mndl::assimp
