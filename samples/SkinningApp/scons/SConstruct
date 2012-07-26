@@ -1,0 +1,10 @@
+env = Environment()
+
+env['APP_TARGET'] = 'SkinningApp'
+env['APP_SOURCES'] = ['SkinningApp.cpp']
+env['ASSETS'] = ['seymour.dae', 'seymour.jpg']
+
+# Cinder-Assimp
+env = SConscript('../../../scons/SConscript', exports = 'env')
+
+SConscript('../../../../../scons/SConscript', exports = 'env')

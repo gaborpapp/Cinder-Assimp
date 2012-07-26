@@ -209,7 +209,8 @@ AssimpNodeRef AssimpLoader::loadNodes( const aiNode *nd, AssimpNodeRef parentRef
 	// process all children
 	for ( unsigned n = 0; n < nd->mNumChildren; ++n )
 	{
-		loadNodes( nd->mChildren[ n ], nodeRef );
+		AssimpNodeRef childRef = loadNodes( nd->mChildren[ n ], nodeRef );
+		nodeRef->addChild( childRef );
 	}
 	return nodeRef;
 }
@@ -376,7 +377,8 @@ void AssimpLoader::updateAnimation()
 		const aiNodeAnim *channel = mAnim->mChannels[ a ];
 
 		// TODO: change this to AssimpNode
-		aiNode *targetNode = mScene->mRootNode->FindNode( channel->mNodeName );
+		//aiNode *targetNode = mScene->mRootNode->FindNode( channel->mNodeName );
+		AssimpNodeRef targetNode = findAssimpNode( fromAssimp( channel->mNodeName ) );
 
 		// ******** Position *****
 		aiVector3D presentPosition( 0, 0, 0 );
@@ -454,6 +456,7 @@ void AssimpLoader::updateAnimation()
 			presentScaling = channel->mScalingKeys[frame].mValue;
 		}
 
+#if 0
 		// build a transformation matrix from it
 		//aiMatrix4x4& mat;// = mTransforms[a];
 		aiMatrix4x4 mat = aiMatrix4x4( presentRotation.GetMatrix());
@@ -465,6 +468,10 @@ void AssimpLoader::updateAnimation()
 
 		// TODO: change this to AssimpNode
 		targetNode->mTransformation = mat;
+#endif
+		targetNode->setOrientation( fromAssimp( presentRotation ) );
+		targetNode->setScale( fromAssimp( presentScaling ) );
+		targetNode->setPosition( fromAssimp( presentPosition ) );
 	}
 }
 
@@ -564,7 +571,7 @@ void AssimpLoader::updateSkinning()
 					meshHelperRef->mAnimatedPos[vertexId] += weight.mWeight * (posTrafo * srcPos);
 				}
 
-				if(mesh->HasNormals())
+				if ( mesh->HasNormals() )
 				{
 					// 3x3 matrix, contains the bone matrix without the
 					// translation, only with rotation and possibly scaling

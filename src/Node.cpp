@@ -8,7 +8,8 @@ namespace mndl {
 Node::Node() :
 	mScale( Vec3f::one() ),
 	mInheritOrientation( true ),
-	mInheritScale( true )
+	mInheritScale( true ),
+	mNeedsUpdate( true )
 {
 }
 
@@ -16,13 +17,15 @@ Node::Node( const std::string &name ) :
 	mName( name ),
 	mScale( Vec3f::one() ),
 	mInheritOrientation( true ),
-	mInheritScale( true )
+	mInheritScale( true ),
+	mNeedsUpdate( true )
 {
 }
 
 void Node::setParent( NodeRef parent )
 {
 	mParent = parent;
+	requestUpdate();
 }
 
 NodeRef Node::getParent() const
@@ -30,10 +33,16 @@ NodeRef Node::getParent() const
 	return mParent;
 }
 
+void Node::addChild( NodeRef child )
+{
+	mChildren.push_back( child );
+}
+
 void Node::setOrientation( const ci::Quatf &q )
 {
 	mOrientation = q;
 	mOrientation.normalize();
+	requestUpdate();
 }
 
 const Quatf &Node::getOrientation() const
@@ -44,6 +53,7 @@ const Quatf &Node::getOrientation() const
 void Node::setPosition( const ci::Vec3f &pos )
 {
 	mPosition = pos;
+	requestUpdate();
 }
 
 const Vec3f& Node::getPosition() const
@@ -54,6 +64,7 @@ const Vec3f& Node::getPosition() const
 void Node::setScale( const Vec3f &scale )
 {
 	mScale = scale;
+	requestUpdate();
 }
 
 const Vec3f &Node::getScale() const
@@ -64,6 +75,7 @@ const Vec3f &Node::getScale() const
 void Node::setInheritOrientation( bool inherit )
 {
 	mInheritOrientation = inherit;
+	requestUpdate();
 }
 
 bool Node::getInheritOrientation() const
@@ -74,6 +86,7 @@ bool Node::getInheritOrientation() const
 void Node::setInheritScale( bool inherit )
 {
 	mInheritScale = inherit;
+	requestUpdate();
 }
 
 bool Node::getInheritScale() const
@@ -103,6 +116,7 @@ void Node::resetToInitialState()
 	mPosition = mInitialPosition;
 	mOrientation = mInitialOrientation;
 	mScale = mInitialScale;
+	requestUpdate();
 }
 
 const Vec3f &Node::getInitialPosition() const
@@ -122,28 +136,29 @@ const Vec3f &Node::getInitialScale() const
 
 const Quatf &Node::getDerivedOrientation() const
 {
-    // TODO: cache transforms, only update when necessary
-	update();
+	if ( mNeedsUpdate )
+		update();
 	return mDerivedOrientation;
 }
 
 const Vec3f &Node::getDerivedPosition() const
 {
-    // TODO: cache transforms, only update when necessary
-	update();
+	if ( mNeedsUpdate )
+		update();
 	return mDerivedPosition;
 }
 
 const Vec3f &Node::getDerivedScale() const
 {
-    // TODO: cache transforms, only update when necessary
-	update();
+	if ( mNeedsUpdate )
+		update();
 	return mDerivedScale;
 }
 
 const Matrix44f &Node::getDerivedTransform() const
 {
-    update();
+	if ( mNeedsUpdate )
+		update();
 
     mDerivedTransform = Matrix44f::createScale( mDerivedScale );
     mDerivedTransform *= mDerivedOrientation.toMatrix44();
@@ -192,6 +207,19 @@ void Node::update() const
         mDerivedPosition = getPosition();
         mDerivedScale = getScale();
     }
+
+	mNeedsUpdate = false;
+}
+
+void Node::requestUpdate()
+{
+	mNeedsUpdate = true;
+
+	for ( vector< NodeRef >::iterator it = mChildren.begin();
+			it != mChildren.end(); ++it )
+	{
+		(*it)->requestUpdate();
+	}
 }
 
 } // namespace mndl

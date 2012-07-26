@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "cinder/Cinder.h"
 #include "cinder/Vector.h"
 #include "cinder/Quaternion.h"
@@ -20,6 +23,8 @@ class Node
 
 		void setParent( NodeRef parent );
 		NodeRef getParent() const;
+
+		void addChild( NodeRef child );
 
 		void setOrientation( const ci::Quatf &q );
 		const ci::Quatf &getOrientation() const;
@@ -51,9 +56,14 @@ class Node
 
 		const ci::Matrix44f &getDerivedTransform() const;
 
+		void requestUpdate();
+
 	protected:
 		/// Shared pointer to parent node.
 		NodeRef mParent;
+
+		/// Shared pointer vector holding the children.
+		std::vector< NodeRef > mChildren;
 
 		/// Name of this node.
 		std::string mName;
@@ -69,6 +79,8 @@ class Node
 
 		/// Stores whether this node inherits orientation from its parent.
 		bool mInheritOrientation;
+
+		mutable bool mNeedsUpdate;
 
 		/// Stores whether this node inherits scale from its parent
 		bool mInheritScale;
