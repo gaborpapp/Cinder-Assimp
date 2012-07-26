@@ -108,11 +108,6 @@ class AssimpNode : public mndl::Node
 {
 	public:
 		std::vector< AssimpMeshHelperRef > mMeshes;
-
-		// FIXME: test
-		ci::Matrix44f mTransform;
-		aiMatrix4x4 mAiTransform;
-		const aiNode *mAiNode;
 };
 
 typedef std::shared_ptr< AssimpNode > AssimpNodeRef;
@@ -130,6 +125,8 @@ class AssimpLoader
 		void draw();
 
 		ci::AxisAlignedBox3f getBoundingBox() const { return mBoundingBox; }
+
+		const std::vector< std::string > &getNodeNames() { return mNodeNames; }
 
 		void enableTextures( bool enable = true ) { mUsingTextures = enable; }
 		void disableTextures() { mUsingTextures = false; }
@@ -163,6 +160,9 @@ class AssimpLoader
 
 		std::vector< AssimpNodeRef > mMeshNodes; /// nodes with meshes
 		std::vector< AssimpMeshHelperRef > mModelMeshes; /// all meshes
+
+		std::vector< std::string > mNodeNames;
+		std::map< std::string, AssimpNodeRef > mNodeMap;
 
 		bool mUsingMaterials;
 		bool mUsingNormals;

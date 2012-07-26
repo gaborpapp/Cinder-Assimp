@@ -1,18 +1,5 @@
-env = Environment()
+Import('env')
 
-env['APP_TARGET'] = 'AssimpApp'
-env['APP_SOURCES'] = ['AssimpApp.cpp']
-env['ASSETS'] = ['astroboy_walk.dae', 'seymour.jpg']
-'''
-env['ASSETS'] += ['scene.mtl', 'scene.obj', 'floor.jpg',
-		'basketball_hoop_bump.jpg',
-		'basketball_hoop_diffuse.jpg',
-		'basketball_hoop_refract.jpg']
-'''
-
-env['DEBUG'] = 1
-
-# Cinder-Assimp
 _INCLUDES = [Dir('../src').abspath]
 
 _SOURCES = ['AssimpLoader.cpp', 'Node.cpp']
@@ -29,7 +16,5 @@ _LIBS = [File(s) for s in _LIBS]
 env.Append(APP_SOURCES = _SOURCES)
 env.Append(CPPPATH = _INCLUDES)
 env.Append(LIBS = _LIBS)
-# 
 
-SConscript('../../../scons/SConscript', exports = 'env')
-
+Return('env')

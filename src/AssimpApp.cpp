@@ -73,6 +73,12 @@ void AssimpApp::setup()
 	//mAssimpLoader = assimp::AssimpLoader( getAssetPath( "scene.obj" ) );
 	//mAssimpLoader = assimp::AssimpLoader( getAssetPath( "player_249_1833.dae" ) );
 
+	const vector< string > nodeNames = mAssimpLoader.getNodeNames();
+	for ( unsigned i = 0; i < nodeNames.size(); ++i )
+	{
+		app::console() << nodeNames[ i ] << endl;
+	}
+
 	CameraPersp cam;
 	cam.setPerspective( 60, getWindowAspectRatio(), 0.1f, 1000.0f );
 	cam.setEyePoint( Vec3f( 0, 7, 20 ) );

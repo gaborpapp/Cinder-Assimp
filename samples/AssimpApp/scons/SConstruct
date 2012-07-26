@@ -1,9 +1,10 @@
-TARGET = 'AssimpApp'
-SOURCES  = ['AssimpApp.cpp']
-RESOURCES = ['seymour.dae', 'seymour.jpg']
-BLOCKS = ['assimp']
-DEBUG = 1
+env = Environment()
 
-SConscript('../../../../../scons/SConscript',
-	exports = ['TARGET', 'SOURCES', 'DEBUG', 'RESOURCES', 'BLOCKS'])
+env['APP_TARGET'] = 'AssimpApp'
+env['APP_SOURCES'] = ['AssimpApp.cpp']
+env['ASSETS'] = ['seymour.dae', 'seymour.jpg']
 
+# Cinder-Assimp
+env = SConscript('../../../scons/SConscript', exports = 'env')
+
+SConscript('../../../../../scons/SConscript', exports = 'env')

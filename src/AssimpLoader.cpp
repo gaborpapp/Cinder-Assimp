@@ -173,7 +173,10 @@ AssimpNodeRef AssimpLoader::loadNodes( const aiNode *nd, AssimpNodeRef parentRef
 {
 	AssimpNodeRef nodeRef = AssimpNodeRef( new AssimpNode() );
 	nodeRef->setParent( parentRef );
-	nodeRef->setName( fromAssimp( nd->mName ) );
+	string nodeName = fromAssimp( nd->mName );
+	nodeRef->setName( nodeName );
+	mNodeMap[ nodeName] = nodeRef;
+	mNodeNames.push_back( nodeName );
 
 	// store transform
 	aiVector3D scaling;
@@ -183,11 +186,6 @@ AssimpNodeRef AssimpLoader::loadNodes( const aiNode *nd, AssimpNodeRef parentRef
 	nodeRef->setScale( fromAssimp( scaling ) );
 	nodeRef->setOrientation( fromAssimp( rotation ) );
 	nodeRef->setPosition( fromAssimp( position ) );
-
-	// test
-	nodeRef->mTransform = fromAssimp( nd->mTransformation );
-	nodeRef->mAiNode = nd;
-	nodeRef->mAiTransform = nd->mTransformation;
 
 	// meshes
 	for ( unsigned i = 0; i < nd->mNumMeshes; ++i )
