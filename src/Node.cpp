@@ -6,13 +6,17 @@ using namespace std;
 namespace mndl {
 
 Node::Node() :
-	mScale( Vec3f::one() )
+	mScale( Vec3f::one() ),
+	mInheritOrientation( true ),
+	mInheritScale( true )
 {
 }
 
 Node::Node( const std::string &name ) :
 	mName( name ),
-	mScale( Vec3f::one() )
+	mScale( Vec3f::one() ),
+	mInheritOrientation( true ),
+	mInheritScale( true )
 {
 }
 

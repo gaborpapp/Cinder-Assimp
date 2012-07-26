@@ -61,6 +61,14 @@ inline ci::Matrix44f fromAssimp( const aiMatrix4x4 &m )
 	return ci::Matrix44f( &m.a1, true );
 }
 
+inline aiMatrix4x4 toAssimp( const ci::Matrix44f &m )
+{
+	return aiMatrix4x4( m.m00, m.m01, m.m02, m.m03,
+						m.m10, m.m11, m.m12, m.m13,
+						m.m20, m.m21, m.m22, m.m23,
+						m.m30, m.m31, m.m32, m.m33 );
+}
+
 inline aiQuaternion toAssimp( const ci::Quatf &q )
 {
     return aiQuaternion( q.w, q.v.x, q.v.y, q.v.z );
@@ -126,6 +134,9 @@ class AssimpLoader
 
 		ci::AxisAlignedBox3f getBoundingBox() const { return mBoundingBox; }
 
+		void setNodeOrientation( std::string name, const ci::Quatf &rot );
+		ci::Quatf getNodeOrientation( std::string name );
+
 		const std::vector< std::string > &getNodeNames() { return mNodeNames; }
 
 		void enableTextures( bool enable = true ) { mUsingTextures = enable; }
@@ -163,6 +174,8 @@ class AssimpLoader
 
 		std::vector< std::string > mNodeNames;
 		std::map< std::string, AssimpNodeRef > mNodeMap;
+
+		AssimpNodeRef findAssimpNode( const std::string &name );
 
 		bool mUsingMaterials;
 		bool mUsingNormals;

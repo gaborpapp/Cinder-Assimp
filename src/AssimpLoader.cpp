@@ -15,6 +15,8 @@
  along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <assert.h>
+
 #include "cinder/app/App.h"
 #include "cinder/ImageIo.h"
 #include "cinder/CinderMath.h"
@@ -466,6 +468,31 @@ void AssimpLoader::updateAnimation()
 	}
 }
 
+AssimpNodeRef AssimpLoader::findAssimpNode( const std::string &name )
+{
+	map< string, AssimpNodeRef >::iterator i = mNodeMap.find( name );
+	if ( i != mNodeMap.end() )
+		return i->second;
+	else
+		return AssimpNodeRef();
+}
+
+void AssimpLoader::setNodeOrientation( string name, const Quatf &rot )
+{
+	AssimpNodeRef node = findAssimpNode( name );
+	if ( node )
+		node->setOrientation( rot );
+}
+
+Quatf AssimpLoader::getNodeOrientation( string name )
+{
+	AssimpNodeRef node = findAssimpNode( name );
+	if ( node )
+		return node->getOrientation();
+	else
+		return Quatf();
+}
+
 void AssimpLoader::updateSkinning()
 {
 	vector< AssimpNodeRef >::const_iterator it = mMeshNodes.begin();
@@ -489,6 +516,11 @@ void AssimpLoader::updateSkinning()
 
 				// find the corresponding node by again looking recursively through
 				// the node hierarchy for the same name
+				AssimpNodeRef nodeRef = findAssimpNode( fromAssimp( bone->mName ) );
+				assert( nodeRef );
+				boneMatrices[ a ] = toAssimp( nodeRef->getDerivedTransform() ) *
+										bone->mOffsetMatrix;
+#if 0
 				// TODO: change this to AssimpNode
 				aiNode *node = mScene->mRootNode->FindNode( bone->mName );
 
@@ -503,6 +535,7 @@ void AssimpLoader::updateSkinning()
 					boneMatrices[ a ] = tempNode->mTransformation * boneMatrices[ a ];
 					tempNode = tempNode->mParent;
 				}
+#endif
 			}
 
 			meshHelperRef->mHasChanged = true;
