@@ -73,6 +73,7 @@ void SkinningApp::prepareSettings( Settings *settings )
 void SkinningApp::setup()
 {
 	mAssimpLoader = assimp::AssimpLoader( getAssetPath( "seymour.dae" ) );
+	mAssimpLoader.enableSkinning();
 	mNodeNames = mAssimpLoader.getNodeNames();
 	if ( mNodeNames.empty () )
 	{

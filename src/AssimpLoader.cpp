@@ -83,7 +83,7 @@ static void fromAssimp( const aiMesh *aim, TriMesh *cim )
 AssimpLoader::AssimpLoader( fs::path filename ) :
 	mMaterialsEnabled( true ),
 	mTexturesEnabled( true ),
-	mSkinningEnabled( true ),
+	mSkinningEnabled( false ),
 	mAnimationEnabled( false ),
 	mFilePath( filename )
 {
