@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2011 Gabor Papp
+ Copyright (C) 2011-2012 Gabor Papp
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -141,14 +141,24 @@ class AssimpLoader
 
 		const std::vector< std::string > &getNodeNames() { return mNodeNames; }
 
-		void enableTextures( bool enable = true ) { mUsingTextures = enable; }
-		void disableTextures() { mUsingTextures = false; }
+		void enableMaterials( bool enable = true ) { mMaterialsEnabled = enable; }
+		void disableMaterials() { mMaterialsEnabled = false; }
+
+		void enableTextures( bool enable = true ) { mTexturesEnabled = enable; }
+		void disableTextures() { mTexturesEnabled = false; }
 
 		void enableSkinning( bool enable = true );
 		void disableSkinning() { enableSkinning( false ); }
 
-		void enableAnimation( bool enable = true ) { mEnableAnimation = enable; }
-		void disableAnimation() { mEnableAnimation = false; }
+		void enableAnimation( bool enable = true ) { mAnimationEnabled = enable; }
+		void disableAnimation() { mAnimationEnabled = false; }
+
+		size_t getNumMeshes() const { return mModelMeshes.size(); }
+		ci::TriMesh &getMesh( size_t n ) { return mModelMeshes[ n ]->mCachedTriMesh; }
+		const ci::TriMesh &getMesh( size_t n ) const { return mModelMeshes[ n ]->mCachedTriMesh; }
+
+		ci::gl::Texture &getTexture( size_t n ) { return mModelMeshes[ n ]->mTexture; }
+		const ci::gl::Texture &getTexture( size_t n ) const { return mModelMeshes[ n ]->mTexture; }
 
 	private:
 		void loadAllMeshes();
@@ -177,12 +187,10 @@ class AssimpLoader
 		std::vector< std::string > mNodeNames;
 		std::map< std::string, AssimpNodeRef > mNodeMap;
 
-		bool mUsingMaterials;
-		bool mUsingNormals;
-		bool mUsingTextures;
-		bool mUsingColors;
-		bool mEnableSkinning;
-		bool mEnableAnimation;
+		bool mMaterialsEnabled;
+		bool mTexturesEnabled;
+		bool mSkinningEnabled;
+		bool mAnimationEnabled;
 };
 
 } } // namespace mndl::assimp

@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2011 Gabor Papp
+ Copyright (C) 2011-2012 Gabor Papp
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -81,12 +81,10 @@ static void fromAssimp( const aiMesh *aim, TriMesh *cim )
 }
 
 AssimpLoader::AssimpLoader( fs::path filename ) :
-	mUsingMaterials( true ),
-	mUsingNormals( true ),
-	mUsingTextures( true ),
-	mUsingColors( true ),
-	mEnableSkinning( true ),
-	mEnableAnimation( false ),
+	mMaterialsEnabled( true ),
+	mTexturesEnabled( true ),
+	mSkinningEnabled( true ),
+	mAnimationEnabled( false ),
 	mFilePath( filename )
 {
 	// FIXME: aiProcessPreset_TargetRealtime_MaxQuality contains
@@ -142,7 +140,6 @@ void AssimpLoader::calculateBoundingBoxForNode( const aiNode *nd, aiVector3D *mi
 	aiMatrix4x4 prev;
 
 	prev = *trafo;
-	//aiMultiplyMatrix4( trafo, &nd->mTransformation );
 	*trafo = *trafo * nd->mTransformation;
 
 	for ( unsigned n = 0; n < nd->mNumMeshes; ++n )
@@ -151,7 +148,6 @@ void AssimpLoader::calculateBoundingBoxForNode( const aiNode *nd, aiVector3D *mi
 		for ( unsigned t = 0; t < mesh->mNumVertices; ++t )
 		{
 			aiVector3D tmp = mesh->mVertices[ t ];
-			//aiTransformVecByMatrix4( &tmp, trafo );
 			tmp *= (*trafo);
 
 			min->x = math<float>::min( min->x, tmp.x );
@@ -224,34 +220,67 @@ AssimpMeshHelperRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
 
 	// Handle material info
 	aiMaterial *mtl = mScene->mMaterials[ mesh->mMaterialIndex ];
-	aiColor4D dcolor, scolor, acolor, ecolor;
 
-	if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_DIFFUSE, &dcolor ) )
+	aiString name;
+	mtl->Get( AI_MATKEY_NAME, name );
+	app::console() << "material " << fromAssimp( name ) << endl;
+
+	// Culling
+	int twoSided;
+	if ( ( AI_SUCCESS == mtl->Get( AI_MATKEY_TWOSIDED, twoSided ) ) && twoSided )
+	{
+		meshHelperRef->mTwoSided = true;
+		meshHelperRef->mMaterial.setFace( GL_FRONT_AND_BACK );
+		app::console() << " two sided" << endl;
+	}
+	else
+	{
+		meshHelperRef->mTwoSided = false;
+		meshHelperRef->mMaterial.setFace( GL_FRONT );
+	}
+
+	aiColor4D dcolor, scolor, acolor, ecolor;
+	if ( AI_SUCCESS == mtl->Get( AI_MATKEY_COLOR_DIFFUSE, dcolor ) )
 	{
 		meshHelperRef->mMaterial.setDiffuse( fromAssimp( dcolor ) );
+		app::console() << " diffuse: " << fromAssimp( dcolor ) << endl;
 	}
 
-	if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_SPECULAR, &scolor ) )
+	if ( AI_SUCCESS == mtl->Get( AI_MATKEY_COLOR_SPECULAR, scolor ) )
 	{
 		meshHelperRef->mMaterial.setSpecular( fromAssimp( scolor ) );
+		app::console() << " specular: " << fromAssimp( scolor ) << endl;
 	}
 
-	if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_AMBIENT, &acolor ) )
+	if ( AI_SUCCESS == mtl->Get( AI_MATKEY_COLOR_AMBIENT, acolor ) )
 	{
 		meshHelperRef->mMaterial.setAmbient( fromAssimp( acolor ) );
+		app::console() << " ambient: " << fromAssimp( acolor ) << endl;
 	}
 
-	if ( AI_SUCCESS == aiGetMaterialColor( mtl, AI_MATKEY_COLOR_EMISSIVE, &ecolor ) )
+	if ( AI_SUCCESS == mtl->Get( AI_MATKEY_COLOR_EMISSIVE, ecolor ) )
 	{
 		meshHelperRef->mMaterial.setEmission( fromAssimp( ecolor ) );
+		app::console() << " emission: " << fromAssimp( ecolor ) << endl;
 	}
 
-	float shininess;
-	if ( AI_SUCCESS == aiGetMaterialFloat( mtl, AI_MATKEY_SHININESS, &shininess ) )
+	/*
+	// FIXME: not sensible data, obj .mtl Ns 96.078431 -> 384.314
+	float shininessStrength = 1;
+	if ( AI_SUCCESS == mtl->Get( AI_MATKEY_SHININESS_STRENGTH, shininessStrength ) )
 	{
-		meshHelperRef->mMaterial.setShininess( shininess );
+		app::console() << "shininess strength: " << shininessStrength << endl;
 	}
+	float shininess;
+	if ( AI_SUCCESS == mtl->Get( AI_MATKEY_SHININESS, shininess ) )
+	{
+		meshHelperRef->mMaterial.setShininess( shininess * shininessStrength );
+		app::console() << "shininess: " << shininess * shininessStrength << "[" <<
+			shininess << "]" << endl;
+	}
+	*/
 
+	// TODO: handle blending
 #if 0
 	int blendMode;
 	if(AI_SUCCESS == aiGetMaterialInteger(mtl, AI_MATKEY_BLEND_FUNC, &blendMode)){
@@ -263,14 +292,6 @@ AssimpMeshHelperRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
 	}
 #endif
 
-	// Culling
-	unsigned int max = 1;
-	int two_sided;
-	if ( ( AI_SUCCESS == aiGetMaterialIntegerArray( mtl, AI_MATKEY_TWOSIDED, &two_sided, &max ) ) && two_sided )
-		meshHelperRef->mTwoSided = true;
-	else
-		meshHelperRef->mTwoSided = false;
-
 	// Load Textures
 	int texIndex = 0;
 	aiString texPath;
@@ -278,7 +299,7 @@ AssimpMeshHelperRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
 	// TODO: handle other aiTextureTypes
 	if ( AI_SUCCESS == mtl->GetTexture( aiTextureType_DIFFUSE, texIndex, &texPath ) )
 	{
-		app::console() << "loading image from " << texPath.data;
+		app::console() << " diffuse texture " << texPath.data;
 		fs::path texFsPath( texPath.data );
 		fs::path modelFolder = mFilePath.parent_path();
 		fs::path relTexPath = texFsPath.parent_path();
@@ -286,15 +307,71 @@ AssimpMeshHelperRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
 		fs::path realPath = modelFolder / relTexPath / texFile;
 		app::console() << " [" << realPath.string() << "]" << endl;
 
+		// texture wrap
+		gl::Texture::Format format;
+		int uwrap;
+		if ( AI_SUCCESS == mtl->Get( AI_MATKEY_MAPPINGMODE_U_DIFFUSE( 0 ), uwrap ) )
+		{
+			switch ( uwrap )
+			{
+				case aiTextureMapMode_Wrap:
+					format.setWrapS( GL_REPEAT );
+					break;
+
+				case aiTextureMapMode_Clamp:
+					format.setWrapS( GL_CLAMP );
+					break;
+
+				case aiTextureMapMode_Decal:
+					// If the texture coordinates for a pixel are outside [0...1]
+					// the texture is not applied to that pixel.
+					format.setWrapS( GL_CLAMP_TO_EDGE );
+					break;
+
+				case aiTextureMapMode_Mirror:
+					// A texture coordinate u|v becomes u%1|v%1 if (u-(u%1))%2
+					// is zero and 1-(u%1)|1-(v%1) otherwise.
+					// TODO
+					format.setWrapS( GL_REPEAT );
+					break;
+			}
+		}
+		int vwrap;
+		if ( AI_SUCCESS == mtl->Get( AI_MATKEY_MAPPINGMODE_V_DIFFUSE( 0 ), vwrap ) )
+		{
+			switch ( vwrap )
+			{
+				case aiTextureMapMode_Wrap:
+					format.setWrapT( GL_REPEAT );
+					break;
+
+				case aiTextureMapMode_Clamp:
+					format.setWrapT( GL_CLAMP );
+					break;
+
+				case aiTextureMapMode_Decal:
+					// If the texture coordinates for a pixel are outside [0...1]
+					// the texture is not applied to that pixel.
+					format.setWrapT( GL_CLAMP_TO_EDGE );
+					break;
+
+				case aiTextureMapMode_Mirror:
+					// A texture coordinate u|v becomes u%1|v%1 if (u-(u%1))%2
+					// is zero and 1-(u%1)|1-(v%1) otherwise.
+					// TODO
+					format.setWrapT( GL_REPEAT );
+					break;
+			}
+		}
+
+		//format.setWrap( GL_REPEAT, GL_REPEAT );
 		// TODO: cache textures
-		meshHelperRef->mTexture = loadImage( realPath );
+		meshHelperRef->mTexture = gl::Texture( loadImage( realPath ), format );
 	}
 
 	meshHelperRef->mAiMesh = mesh;
 	fromAssimp( mesh, &meshHelperRef->mCachedTriMesh );
 	meshHelperRef->mValidCache = true;
-	meshHelperRef->mHasChanged = false;
-
 	meshHelperRef->mAnimatedPos.resize( mesh->mNumVertices );
 	if ( mesh->HasNormals() )
 	{
@@ -347,7 +424,8 @@ void AssimpLoader::loadAllMeshes()
 {
 	for ( unsigned i = 0; i < mScene->mNumMeshes; ++i )
 	{
-		app::console() << "loading mesh " << i << endl;
+		app::console() << "loading mesh " << i << "[" <<
+			fromAssimp( mScene->mMeshes[ i ]->mName ) << "]" << endl;
 		AssimpMeshHelperRef meshHelperRef = convertAiMesh( mScene->mMeshes[ i ] );
 		mModelMeshes.push_back( meshHelperRef );
 	}
@@ -545,7 +623,6 @@ void AssimpLoader::updateSkinning()
 #endif
 			}
 
-			meshHelperRef->mHasChanged = true;
 			meshHelperRef->mValidCache = false;
 
 			meshHelperRef->mAnimatedPos.assign( meshHelperRef->mAnimatedPos.size(),
@@ -605,7 +682,7 @@ void AssimpLoader::updateMeshes()
 			if ( meshHelperRef->mValidCache )
 				continue;
 
-			if ( mEnableSkinning )
+			if ( mSkinningEnabled )
 			{
 				// animated data
 				std::vector< Vec3f > &vertices = meshHelperRef->mCachedTriMesh.getVertices();
@@ -637,10 +714,10 @@ void AssimpLoader::updateMeshes()
 
 void AssimpLoader::enableSkinning( bool enable /* = true */ )
 {
-	if ( mEnableSkinning == enable )
+	if ( mSkinningEnabled == enable )
 		return;
 
-	mEnableSkinning = enable;
+	mSkinningEnabled = enable;
 	// invalidate mesh cache
 	vector< AssimpNodeRef >::const_iterator it = mMeshNodes.begin();
 	for ( ; it != mMeshNodes.end(); ++it )
@@ -658,10 +735,10 @@ void AssimpLoader::enableSkinning( bool enable /* = true */ )
 
 void AssimpLoader::update()
 {
-	if ( mEnableAnimation )
+	if ( mAnimationEnabled )
 		updateAnimation();
 
-	if ( mEnableSkinning )
+	if ( mSkinningEnabled )
 		updateSkinning();
 
 	updateMeshes();
@@ -684,14 +761,18 @@ void AssimpLoader::draw()
 			AssimpMeshHelperRef meshHelperRef = *meshIt;
 
 			// Texture Binding
-			if ( mUsingTextures && meshHelperRef->mTexture )
+			if ( mTexturesEnabled && meshHelperRef->mTexture )
 			{
 				meshHelperRef->mTexture.enableAndBind();
 			}
 
-			if ( mUsingMaterials )
+			if ( mMaterialsEnabled )
 			{
 				meshHelperRef->mMaterial.apply();
+			}
+			else
+			{
+				gl::color( meshHelperRef->mMaterial.getDiffuse());
 			}
 
 			// Culling
@@ -703,7 +784,7 @@ void AssimpLoader::draw()
 			gl::draw( meshHelperRef->mCachedTriMesh );
 
 			// Texture Binding
-			if ( mUsingTextures && meshHelperRef->mTexture )
+			if ( mTexturesEnabled && meshHelperRef->mTexture )
 			{
 				meshHelperRef->mTexture.unbind();
 			}

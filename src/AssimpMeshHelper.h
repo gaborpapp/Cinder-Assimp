@@ -21,21 +21,14 @@ class AssimpMeshHelper
 	public:
 		// pointer to the aiMesh we represent.
 		const aiMesh *mAiMesh;
-/*
-		// VBOs
-		ofVbo vbo;
-*/
+
 		// texture
 		ci::gl::Texture mTexture;
 
 		std::vector< uint32_t > mIndices;
 
 		ci::gl::Material mMaterial;
-/*
-		ofBlendMode blendMode;
-*/
 		bool mTwoSided;
-		bool mHasChanged;
 
 		std::vector< aiVector3D > mAnimatedPos;
 		std::vector< aiVector3D > mAnimatedNorm;
