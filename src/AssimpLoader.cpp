@@ -364,7 +364,6 @@ AssimpMeshHelperRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
 			}
 		}
 
-		//format.setWrap( GL_REPEAT, GL_REPEAT );
 		// TODO: cache textures
 		meshHelperRef->mTexture = gl::Texture( loadImage( realPath ), format );
 	}
@@ -422,10 +421,15 @@ AssimpMeshHelperRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
 
 void AssimpLoader::loadAllMeshes()
 {
+	app::console() << "loading model " << mFilePath.filename().string() <<
+		" [" << mFilePath.string() << "] " << endl;
 	for ( unsigned i = 0; i < mScene->mNumMeshes; ++i )
 	{
-		app::console() << "loading mesh " << i << "[" <<
-			fromAssimp( mScene->mMeshes[ i ]->mName ) << "]" << endl;
+		string name = fromAssimp( mScene->mMeshes[ i ]->mName );
+		app::console() << "loading mesh " << i;
+		if ( name != "" )
+			app::console() << " [" << name << "]";
+		app::console() << endl;
 		AssimpMeshHelperRef meshHelperRef = convertAiMesh( mScene->mMeshes[ i ] );
 		mModelMeshes.push_back( meshHelperRef );
 	}
@@ -435,7 +439,7 @@ void AssimpLoader::loadAllMeshes()
 	setNormalizedTime(0);
 #endif
 
-	app::console() << "finished loading gl resources" << endl;
+	app::console() << "finished loading model " << mFilePath.filename().string() << endl;
 }
 
 void AssimpLoader::updateAnimation()
@@ -454,8 +458,6 @@ void AssimpLoader::updateAnimation()
 	{
 		const aiNodeAnim *channel = mAnim->mChannels[ a ];
 
-		// TODO: change this to AssimpNode
-		//aiNode *targetNode = mScene->mRootNode->FindNode( channel->mNodeName );
 		AssimpNodeRef targetNode = getAssimpNode( fromAssimp( channel->mNodeName ) );
 
 		// ******** Position *****
@@ -534,19 +536,6 @@ void AssimpLoader::updateAnimation()
 			presentScaling = channel->mScalingKeys[frame].mValue;
 		}
 
-#if 0
-		// build a transformation matrix from it
-		//aiMatrix4x4& mat;// = mTransforms[a];
-		aiMatrix4x4 mat = aiMatrix4x4( presentRotation.GetMatrix());
-		mat.a1 *= presentScaling.x; mat.b1 *= presentScaling.x; mat.c1 *= presentScaling.x;
-		mat.a2 *= presentScaling.y; mat.b2 *= presentScaling.y; mat.c2 *= presentScaling.y;
-		mat.a3 *= presentScaling.z; mat.b3 *= presentScaling.z; mat.c3 *= presentScaling.z;
-		mat.a4 = presentPosition.x; mat.b4 = presentPosition.y; mat.c4 = presentPosition.z;
-		//mat.Transpose();
-
-		// TODO: change this to AssimpNode
-		targetNode->mTransformation = mat;
-#endif
 		targetNode->setOrientation( fromAssimp( presentRotation ) );
 		targetNode->setScale( fromAssimp( presentScaling ) );
 		targetNode->setPosition( fromAssimp( presentPosition ) );
@@ -603,24 +592,11 @@ void AssimpLoader::updateSkinning()
 				// the node hierarchy for the same name
 				AssimpNodeRef nodeRef = getAssimpNode( fromAssimp( bone->mName ) );
 				assert( nodeRef );
+				// start with the mesh-to-bone matrix
+				// and append all node transformations down the parent chain until
+				// we're back at mesh coordinates again
 				boneMatrices[ a ] = toAssimp( nodeRef->getDerivedTransform() ) *
 										bone->mOffsetMatrix;
-#if 0
-				// TODO: change this to AssimpNode
-				aiNode *node = mScene->mRootNode->FindNode( bone->mName );
-
-				// start with the mesh-to-bone matrix
-				boneMatrices[ a ] = bone->mOffsetMatrix;
-				// and now append all node transformations down the parent chain until
-				// we're back at mesh coordinates again
-				const aiNode *tempNode = node;
-				while( tempNode )
-				{
-					// check your matrix multiplication order here!!!
-					boneMatrices[ a ] = tempNode->mTransformation * boneMatrices[ a ];
-					tempNode = tempNode->mParent;
-				}
-#endif
 			}
 
 			meshHelperRef->mValidCache = false;
