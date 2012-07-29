@@ -1,0 +1,139 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\AssimpLoader.cpp" />
+    <ClCompile Include="..\src\Node.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\AssimpLoader.h" />
+    <ClInclude Include="..\src\AssimpMeshHelper.h" />
+    <ClInclude Include="..\src\assimp\ai_assert.h" />
+    <ClInclude Include="..\src\assimp\anim.h" />
+    <ClInclude Include="..\src\assimp\camera.h" />
+    <ClInclude Include="..\src\assimp\cexport.h" />
+    <ClInclude Include="..\src\assimp\cfileio.h" />
+    <ClInclude Include="..\src\assimp\cimport.h" />
+    <ClInclude Include="..\src\assimp\color4.h" />
+    <ClInclude Include="..\src\assimp\Compiler\poppack1.h" />
+    <ClInclude Include="..\src\assimp\Compiler\pushpack1.h" />
+    <ClInclude Include="..\src\assimp\config.h" />
+    <ClInclude Include="..\src\assimp\DefaultLogger.hpp" />
+    <ClInclude Include="..\src\assimp\defs.h" />
+    <ClInclude Include="..\src\assimp\Exporter.hpp" />
+    <ClInclude Include="..\src\assimp\Importer.hpp" />
+    <ClInclude Include="..\src\assimp\importerdesc.h" />
+    <ClInclude Include="..\src\assimp\IOStream.hpp" />
+    <ClInclude Include="..\src\assimp\IOSystem.hpp" />
+    <ClInclude Include="..\src\assimp\light.h" />
+    <ClInclude Include="..\src\assimp\Logger.hpp" />
+    <ClInclude Include="..\src\assimp\LogStream.hpp" />
+    <ClInclude Include="..\src\assimp\material.h" />
+    <ClInclude Include="..\src\assimp\matrix3x3.h" />
+    <ClInclude Include="..\src\assimp\matrix4x4.h" />
+    <ClInclude Include="..\src\assimp\mesh.h" />
+    <ClInclude Include="..\src\assimp\NullLogger.hpp" />
+    <ClInclude Include="..\src\assimp\postprocess.h" />
+    <ClInclude Include="..\src\assimp\ProgressHandler.hpp" />
+    <ClInclude Include="..\src\assimp\quaternion.h" />
+    <ClInclude Include="..\src\assimp\scene.h" />
+    <ClInclude Include="..\src\assimp\texture.h" />
+    <ClInclude Include="..\src\assimp\types.h" />
+    <ClInclude Include="..\src\assimp\vector2.h" />
+    <ClInclude Include="..\src\assimp\vector3.h" />
+    <ClInclude Include="..\src\assimp\version.h" />
+    <ClInclude Include="..\src\MatrixUtils.h" />
+    <ClInclude Include="..\src\Node.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\assimp\color4.inl" />
+    <None Include="..\src\assimp\material.inl" />
+    <None Include="..\src\assimp\matrix3x3.inl" />
+    <None Include="..\src\assimp\matrix4x4.inl" />
+    <None Include="..\src\assimp\quaternion.inl" />
+    <None Include="..\src\assimp\vector2.inl" />
+    <None Include="..\src\assimp\vector3.inl" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{FBDAC942-0359-4A65-B374-2C97C02A396E}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>S9fbx</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)\..\lib\vc10\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <TargetName>$(ProjectName)d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)\..\lib\vc10\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CINDER_DIR)/include;$(BOOST_DIR)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CINDER_DIR)/include;$(BOOST_DIR)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
