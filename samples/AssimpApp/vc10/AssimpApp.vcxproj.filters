@@ -13,10 +13,36 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="blocks">
+      <UniqueIdentifier>{2cf6436e-3b33-44d2-be00-e3086a5384e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="blocks\assimp">
+      <UniqueIdentifier>{c774afbd-5320-4d61-8ca5-7d41694a4093}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\AssimpApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\AssimpLoader.cpp">
+      <Filter>blocks\assimp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\Node.cpp">
+      <Filter>blocks\assimp</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\AssimpLoader.h">
+      <Filter>blocks\assimp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\AssimpMeshHelper.h">
+      <Filter>blocks\assimp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\MatrixUtils.h">
+      <Filter>blocks\assimp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\Node.h">
+      <Filter>blocks\assimp</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

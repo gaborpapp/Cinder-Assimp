@@ -11,7 +11,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\src\AssimpLoader.cpp" />
+    <ClCompile Include="..\..\..\src\Node.cpp" />
     <ClCompile Include="..\src\AssimpApp.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\AssimpLoader.h" />
+    <ClInclude Include="..\..\..\src\AssimpMeshHelper.h" />
+    <ClInclude Include="..\..\..\src\MatrixUtils.h" />
+    <ClInclude Include="..\..\..\src\Node.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{27257FEF-9BF1-4F0B-9AF5-EB38E9B5E8EF}</ProjectGuid>
@@ -61,8 +69,8 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>cinder_d.lib;Cinder-Assimpd.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\lib\vc10;..\..\..\vc10\lib;$(CINDER_DIR)\lib;$(CINDER_DIR)\lib\msw;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cinder_d.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\lib\msw;$(CINDER_DIR)\lib;$(CINDER_DIR)\lib\msw;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -83,8 +91,8 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>cinder.lib;Cinder-Assimp.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\lib\vc10;..\..\..\vc10\lib;$(CINDER_DIR)\lib;$(CINDER_DIR)\lib\msw;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cinder.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\lib\msw;$(CINDER_DIR)\lib;$(CINDER_DIR)\lib\msw;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
