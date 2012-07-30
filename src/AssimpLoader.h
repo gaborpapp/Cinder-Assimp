@@ -138,6 +138,13 @@ class AssimpLoader
 		ci::Quatf getNodeOrientation( const std::string &name );
 
 		AssimpNodeRef getAssimpNode( const std::string &name );
+		const AssimpNodeRef getAssimpNode( const std::string &name ) const;
+
+		size_t getAssimpNodeNumMeshes( const std::string &name );
+		ci::TriMesh &getAssimpNodeMesh( const std::string &name, size_t n = 0 );
+		const ci::TriMesh &getAssimpNodeMesh( const std::string &name, size_t n = 0 ) const;
+		ci::gl::Texture &getAssimpNodeTexture( const std::string &name, size_t n = 0 );
+		const ci::gl::Texture &getAssimpNodeTexture( const std::string &name, size_t n = 0 ) const;
 
 		const std::vector< std::string > &getNodeNames() { return mNodeNames; }
 

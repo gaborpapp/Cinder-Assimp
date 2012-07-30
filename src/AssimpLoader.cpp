@@ -551,6 +551,60 @@ AssimpNodeRef AssimpLoader::getAssimpNode( const std::string &name )
 		return AssimpNodeRef();
 }
 
+const AssimpNodeRef AssimpLoader::getAssimpNode( const std::string &name ) const
+{
+	map< string, AssimpNodeRef >::const_iterator i = mNodeMap.find( name );
+	if ( i != mNodeMap.end() )
+		return i->second;
+	else
+		return AssimpNodeRef();
+}
+
+size_t AssimpLoader::getAssimpNodeNumMeshes( const string &name )
+{
+	AssimpNodeRef node = getAssimpNode( name );
+	if ( node )
+		return node->mMeshes.size();
+	else
+		return 0;
+}
+
+TriMesh &AssimpLoader::getAssimpNodeMesh( const string &name, size_t n /* = 0 */ )
+{
+	AssimpNodeRef node = getAssimpNode( name );
+	if ( node && n < node->mMeshes.size() )
+		return node->mMeshes[ n ]->mCachedTriMesh;
+	else
+		throw AssimpLoaderExc( "node " + name + " not found." );
+}
+
+const TriMesh &AssimpLoader::getAssimpNodeMesh( const string &name, size_t n /* = 0 */ ) const
+{
+	const AssimpNodeRef node = getAssimpNode( name );
+	if ( node && n < node->mMeshes.size() )
+		return node->mMeshes[ n ]->mCachedTriMesh;
+	else
+		throw AssimpLoaderExc( "node " + name + " not found." );
+}
+
+gl::Texture &AssimpLoader::getAssimpNodeTexture( const string &name, size_t n /* = 0 */ )
+{
+	AssimpNodeRef node = getAssimpNode( name );
+	if ( node && n < node->mMeshes.size() )
+		return node->mMeshes[ n ]->mTexture;
+	else
+		throw AssimpLoaderExc( "node " + name + " not found." );
+}
+
+const gl::Texture &AssimpLoader::getAssimpNodeTexture( const string &name, size_t n /* = 0 */ ) const
+{
+	const AssimpNodeRef node = getAssimpNode( name );
+	if ( node && n < node->mMeshes.size() )
+		return node->mMeshes[ n ]->mTexture;
+	else
+		throw AssimpLoaderExc( "node " + name + " not found." );
+}
+
 void AssimpLoader::setNodeOrientation( const string &name, const Quatf &rot )
 {
 	AssimpNodeRef node = getAssimpNode( name );
