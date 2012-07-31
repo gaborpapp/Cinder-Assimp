@@ -145,6 +145,8 @@ class AssimpLoader
 		const ci::TriMesh &getAssimpNodeMesh( const std::string &name, size_t n = 0 ) const;
 		ci::gl::Texture &getAssimpNodeTexture( const std::string &name, size_t n = 0 );
 		const ci::gl::Texture &getAssimpNodeTexture( const std::string &name, size_t n = 0 ) const;
+		ci::gl::Material &getAssimpNodeMaterial( const std::string &name, size_t n = 0 );
+		const ci::gl::Material &getAssimpNodeMaterial( const std::string &name, size_t n = 0 ) const;
 
 		const std::vector< std::string > &getNodeNames() { return mNodeNames; }
 

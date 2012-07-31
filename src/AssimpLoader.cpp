@@ -605,6 +605,24 @@ const gl::Texture &AssimpLoader::getAssimpNodeTexture( const string &name, size_
 		throw AssimpLoaderExc( "node " + name + " not found." );
 }
 
+gl::Material &AssimpLoader::getAssimpNodeMaterial( const string &name, size_t n /* = 0 */ )
+{
+	AssimpNodeRef node = getAssimpNode( name );
+	if ( node && n < node->mMeshes.size() )
+		return node->mMeshes[ n ]->mMaterial;
+	else
+		throw AssimpLoaderExc( "node " + name + " not found." );
+}
+
+const gl::Material &AssimpLoader::getAssimpNodeMaterial( const string &name, size_t n /* = 0 */ ) const
+{
+	const AssimpNodeRef node = getAssimpNode( name );
+	if ( node && n < node->mMeshes.size() )
+		return node->mMeshes[ n ]->mMaterial;
+	else
+		throw AssimpLoaderExc( "node " + name + " not found." );
+}
+
 void AssimpLoader::setNodeOrientation( const string &name, const Quatf &rot )
 {
 	AssimpNodeRef node = getAssimpNode( name );
