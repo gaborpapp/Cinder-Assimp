@@ -2,17 +2,20 @@
  Copyright (C) 2011-2012 Gabor Papp
 
  This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 3 of the License, or
+ it under the terms of the GNU Lesser General Public License as published
+ by the Free Software Foundation; either version 3 of the License, or
  (at your option) any later version.
 
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+ GNU Lesser General Public License for more details.
 
- You should have received a copy of the GNU General Public License
+ You should have received a copy of the GNU Lesser General Public License
  along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+ Based on ofxAssimpModelLoader by Anton Marini, Memo Akten, Kyle McDonald
+ and Arturo Castro
 */
 
 #include <assert.h>
@@ -85,7 +88,8 @@ AssimpLoader::AssimpLoader( fs::path filename ) :
 	mTexturesEnabled( true ),
 	mSkinningEnabled( false ),
 	mAnimationEnabled( false ),
-	mFilePath( filename )
+	mFilePath( filename ),
+	mAnimationIndex( 0 )
 {
 	// FIXME: aiProcessPreset_TargetRealtime_MaxQuality contains
 	// aiProcess_Debone which is buggy in 3.0.1270
@@ -109,10 +113,6 @@ AssimpLoader::AssimpLoader( fs::path filename ) :
 
 	loadAllMeshes();
 	mRootNode = loadNodes( mScene->mRootNode );
-}
-
-AssimpLoader::~AssimpLoader()
-{
 }
 
 void AssimpLoader::calculateDimensions()
@@ -211,12 +211,12 @@ AssimpNodeRef AssimpLoader::loadNodes( const aiNode *nd, AssimpNodeRef parentRef
 	return nodeRef;
 }
 
-AssimpMeshHelperRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
+AssimpMeshRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
 {
-	// the current meshHelper we will be populating data into.
-	AssimpMeshHelperRef meshHelperRef = AssimpMeshHelperRef( new AssimpMeshHelper() );
+	// the current AssimpMesh we will be populating data into.
+	AssimpMeshRef assimpMeshRef = AssimpMeshRef( new AssimpMesh() );
 
-	meshHelperRef->mName = fromAssimp( mesh->mName );
+	assimpMeshRef->mName = fromAssimp( mesh->mName );
 
 	// Handle material info
 	aiMaterial *mtl = mScene->mMaterials[ mesh->mMaterialIndex ];
@@ -229,38 +229,38 @@ AssimpMeshHelperRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
 	int twoSided;
 	if ( ( AI_SUCCESS == mtl->Get( AI_MATKEY_TWOSIDED, twoSided ) ) && twoSided )
 	{
-		meshHelperRef->mTwoSided = true;
-		meshHelperRef->mMaterial.setFace( GL_FRONT_AND_BACK );
+		assimpMeshRef->mTwoSided = true;
+		assimpMeshRef->mMaterial.setFace( GL_FRONT_AND_BACK );
 		app::console() << " two sided" << endl;
 	}
 	else
 	{
-		meshHelperRef->mTwoSided = false;
-		meshHelperRef->mMaterial.setFace( GL_FRONT );
+		assimpMeshRef->mTwoSided = false;
+		assimpMeshRef->mMaterial.setFace( GL_FRONT );
 	}
 
 	aiColor4D dcolor, scolor, acolor, ecolor;
 	if ( AI_SUCCESS == mtl->Get( AI_MATKEY_COLOR_DIFFUSE, dcolor ) )
 	{
-		meshHelperRef->mMaterial.setDiffuse( fromAssimp( dcolor ) );
+		assimpMeshRef->mMaterial.setDiffuse( fromAssimp( dcolor ) );
 		app::console() << " diffuse: " << fromAssimp( dcolor ) << endl;
 	}
 
 	if ( AI_SUCCESS == mtl->Get( AI_MATKEY_COLOR_SPECULAR, scolor ) )
 	{
-		meshHelperRef->mMaterial.setSpecular( fromAssimp( scolor ) );
+		assimpMeshRef->mMaterial.setSpecular( fromAssimp( scolor ) );
 		app::console() << " specular: " << fromAssimp( scolor ) << endl;
 	}
 
 	if ( AI_SUCCESS == mtl->Get( AI_MATKEY_COLOR_AMBIENT, acolor ) )
 	{
-		meshHelperRef->mMaterial.setAmbient( fromAssimp( acolor ) );
+		assimpMeshRef->mMaterial.setAmbient( fromAssimp( acolor ) );
 		app::console() << " ambient: " << fromAssimp( acolor ) << endl;
 	}
 
 	if ( AI_SUCCESS == mtl->Get( AI_MATKEY_COLOR_EMISSIVE, ecolor ) )
 	{
-		meshHelperRef->mMaterial.setEmission( fromAssimp( ecolor ) );
+		assimpMeshRef->mMaterial.setEmission( fromAssimp( ecolor ) );
 		app::console() << " emission: " << fromAssimp( ecolor ) << endl;
 	}
 
@@ -274,7 +274,7 @@ AssimpMeshHelperRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
 	float shininess;
 	if ( AI_SUCCESS == mtl->Get( AI_MATKEY_SHININESS, shininess ) )
 	{
-		meshHelperRef->mMaterial.setShininess( shininess * shininessStrength );
+		assimpMeshRef->mMaterial.setShininess( shininess * shininessStrength );
 		app::console() << "shininess: " << shininess * shininessStrength << "[" <<
 			shininess << "]" << endl;
 	}
@@ -364,59 +364,30 @@ AssimpMeshHelperRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
 			}
 		}
 
-		// TODO: cache textures
-		meshHelperRef->mTexture = gl::Texture( loadImage( realPath ), format );
+		assimpMeshRef->mTexture = gl::Texture( loadImage( realPath ), format );
 	}
 
-	meshHelperRef->mAiMesh = mesh;
-	fromAssimp( mesh, &meshHelperRef->mCachedTriMesh );
-	meshHelperRef->mValidCache = true;
-	meshHelperRef->mAnimatedPos.resize( mesh->mNumVertices );
+	assimpMeshRef->mAiMesh = mesh;
+	fromAssimp( mesh, &assimpMeshRef->mCachedTriMesh );
+	assimpMeshRef->mValidCache = true;
+	assimpMeshRef->mAnimatedPos.resize( mesh->mNumVertices );
 	if ( mesh->HasNormals() )
 	{
-		meshHelperRef->mAnimatedNorm.resize( mesh->mNumVertices );
+		assimpMeshRef->mAnimatedNorm.resize( mesh->mNumVertices );
 	}
 
-#if 0
 
-	int usage;
-	if(getAnimationCount()){
-#ifndef TARGET_OPENGLES
-		usage = GL_STREAM_DRAW;
-#else
-		usage = GL_DYNAMIC_DRAW;
-#endif
-	}else{
-		usage = GL_STATIC_DRAW;
-
-	}
-
-	meshHelper.vbo.setVertexData(&mesh->mVertices[0].x,3,mesh->mNumVertices,usage,sizeof(aiVector3D));
-	if(mesh->HasVertexColors(0)){
-		meshHelper.vbo.setColorData(&mesh->mColors[0][0].r,mesh->mNumVertices,GL_STATIC_DRAW,sizeof(aiColor4D));
-	}
-	if(mesh->HasNormals()){
-		meshHelper.vbo.setNormalData(&mesh->mNormals[0].x,mesh->mNumVertices,usage,sizeof(aiVector3D));
-	}
-	if (meshHelper.cachedMesh.hasTexCoords()){
-		meshHelper.vbo.setTexCoordData(meshHelper.cachedMesh.getTexCoordsPointer()[0].getPtr(),mesh->mNumVertices,GL_STATIC_DRAW,sizeof(ofVec2f));
-	}
-#endif
-
-	meshHelperRef->mIndices.resize( mesh->mNumFaces * 3 );
+	assimpMeshRef->mIndices.resize( mesh->mNumFaces * 3 );
 	unsigned j = 0;
 	for ( unsigned x = 0; x < mesh->mNumFaces; ++x )
 	{
 		for ( unsigned a = 0; a < mesh->mFaces[x].mNumIndices; ++a)
 		{
-			meshHelperRef->mIndices[ j++ ] = mesh->mFaces[ x ].mIndices[ a ];
+			assimpMeshRef->mIndices[ j++ ] = mesh->mFaces[ x ].mIndices[ a ];
 		}
 	}
 
-#if 0
-	meshHelper.vbo.setIndexData(&meshHelper.indices[0],meshHelper.indices.size(),GL_STATIC_DRAW);
-#endif
-	return meshHelperRef;
+	return assimpMeshRef;
 }
 
 void AssimpLoader::loadAllMeshes()
@@ -430,8 +401,8 @@ void AssimpLoader::loadAllMeshes()
 		if ( name != "" )
 			app::console() << " [" << name << "]";
 		app::console() << endl;
-		AssimpMeshHelperRef meshHelperRef = convertAiMesh( mScene->mMeshes[ i ] );
-		mModelMeshes.push_back( meshHelperRef );
+		AssimpMeshRef assimpMeshRef = convertAiMesh( mScene->mMeshes[ i ] );
+		mModelMeshes.push_back( assimpMeshRef );
 	}
 
 #if 0
@@ -442,16 +413,16 @@ void AssimpLoader::loadAllMeshes()
 	app::console() << "finished loading model " << mFilePath.filename().string() << endl;
 }
 
-void AssimpLoader::updateAnimation()
+void AssimpLoader::updateAnimation( size_t animationIndex, double currentTime )
 {
 	if ( mScene->mNumAnimations == 0 )
 		return;
 
-	// TODO: set this by caller, this for test only
-	unsigned animationIndex = 0;
-	float currentTime = math<float>::fmod( app::getElapsedSeconds(), 5.f ) / 5.f;
-
 	const aiAnimation *mAnim = mScene->mAnimations[ animationIndex ];
+	double ticks = mAnim->mTicksPerSecond;
+	if ( ticks == 0.0 )
+		ticks = 1.0;
+	currentTime *= ticks;
 
 	// calculate the transformations for each animation channel
 	for( unsigned int a = 0; a < mAnim->mNumChannels; a++ )
@@ -639,6 +610,30 @@ Quatf AssimpLoader::getNodeOrientation( const string &name )
 		return Quatf();
 }
 
+size_t AssimpLoader::getNumAnimations() const
+{
+	return mScene->mNumAnimations;
+}
+
+void AssimpLoader::setAnimation( size_t n )
+{
+	mAnimationIndex = math< size_t >::clamp( n, 0, getNumAnimations() );
+}
+
+void AssimpLoader::setTime( double t )
+{
+	mAnimationTime = t;
+}
+
+double AssimpLoader::getAnimationDuration( size_t n ) const
+{
+	const aiAnimation *anim = mScene->mAnimations[ n ];
+	double ticks = anim->mTicksPerSecond;
+	if ( ticks == 0.0 )
+		ticks = 1.0;
+	return anim->mDuration / ticks;
+}
+
 void AssimpLoader::updateSkinning()
 {
 	vector< AssimpNodeRef >::const_iterator it = mMeshNodes.begin();
@@ -646,13 +641,13 @@ void AssimpLoader::updateSkinning()
 	{
 		AssimpNodeRef nodeRef = *it;
 
-		vector< AssimpMeshHelperRef >::const_iterator meshIt = nodeRef->mMeshes.begin();
+		vector< AssimpMeshRef >::const_iterator meshIt = nodeRef->mMeshes.begin();
 		for ( ; meshIt != nodeRef->mMeshes.end(); ++meshIt )
 		{
-			AssimpMeshHelperRef meshHelperRef = *meshIt;
+			AssimpMeshRef assimpMeshRef = *meshIt;
 
 			// current mesh we are introspecting
-			const aiMesh *mesh = meshHelperRef->mAiMesh;
+			const aiMesh *mesh = assimpMeshRef->mAiMesh;
 
 			// calculate bone matrices
 			std::vector< aiMatrix4x4 > boneMatrices( mesh->mNumBones );
@@ -671,13 +666,13 @@ void AssimpLoader::updateSkinning()
 										bone->mOffsetMatrix;
 			}
 
-			meshHelperRef->mValidCache = false;
+			assimpMeshRef->mValidCache = false;
 
-			meshHelperRef->mAnimatedPos.assign( meshHelperRef->mAnimatedPos.size(),
+			assimpMeshRef->mAnimatedPos.assign( assimpMeshRef->mAnimatedPos.size(),
 					aiVector3D( 0, 0, 0 ) );
 			if ( mesh->HasNormals() )
 			{
-				meshHelperRef->mAnimatedNorm.assign( meshHelperRef->mAnimatedNorm.size(),
+				assimpMeshRef->mAnimatedNorm.assign( assimpMeshRef->mAnimatedNorm.size(),
 						aiVector3D( 0, 0, 0 ) );
 			}
 
@@ -693,7 +688,7 @@ void AssimpLoader::updateSkinning()
 					size_t vertexId = weight.mVertexId;
 					const aiVector3D& srcPos = mesh->mVertices[vertexId];
 
-					meshHelperRef->mAnimatedPos[vertexId] += weight.mWeight * (posTrafo * srcPos);
+					assimpMeshRef->mAnimatedPos[vertexId] += weight.mWeight * (posTrafo * srcPos);
 				}
 
 				if ( mesh->HasNormals() )
@@ -703,11 +698,11 @@ void AssimpLoader::updateSkinning()
 					aiMatrix3x3 normTrafo = aiMatrix3x3( posTrafo );
 					for ( size_t b = 0; b < bone->mNumWeights; ++b )
 					{
-						const aiVertexWeight& weight = bone->mWeights[b];
+						const aiVertexWeight &weight = bone->mWeights[b];
 						size_t vertexId = weight.mVertexId;
 
 						const aiVector3D& srcNorm = mesh->mNormals[vertexId];
-						meshHelperRef->mAnimatedNorm[vertexId] += weight.mWeight * (normTrafo * srcNorm);
+						assimpMeshRef->mAnimatedNorm[vertexId] += weight.mWeight * (normTrafo * srcNorm);
 					}
 				}
 			}
@@ -722,40 +717,40 @@ void AssimpLoader::updateMeshes()
 	{
 		AssimpNodeRef nodeRef = *it;
 
-		vector< AssimpMeshHelperRef >::iterator meshIt = nodeRef->mMeshes.begin();
+		vector< AssimpMeshRef >::iterator meshIt = nodeRef->mMeshes.begin();
 		for ( ; meshIt != nodeRef->mMeshes.end(); ++meshIt )
 		{
-			AssimpMeshHelperRef meshHelperRef = *meshIt;
+			AssimpMeshRef assimpMeshRef = *meshIt;
 
-			if ( meshHelperRef->mValidCache )
+			if ( assimpMeshRef->mValidCache )
 				continue;
 
 			if ( mSkinningEnabled )
 			{
 				// animated data
-				std::vector< Vec3f > &vertices = meshHelperRef->mCachedTriMesh.getVertices();
+				std::vector< Vec3f > &vertices = assimpMeshRef->mCachedTriMesh.getVertices();
 				for( size_t v = 0; v < vertices.size(); ++v )
-					vertices[v] = fromAssimp( meshHelperRef->mAnimatedPos[ v ] );
+					vertices[v] = fromAssimp( assimpMeshRef->mAnimatedPos[ v ] );
 
-				std::vector< Vec3f > &normals = meshHelperRef->mCachedTriMesh.getNormals();
+				std::vector< Vec3f > &normals = assimpMeshRef->mCachedTriMesh.getNormals();
 				for( size_t v = 0; v < normals.size(); ++v )
-					normals[v] = fromAssimp( meshHelperRef->mAnimatedNorm[ v ] );
+					normals[v] = fromAssimp( assimpMeshRef->mAnimatedNorm[ v ] );
 			}
 			else
 			{
 				// original mesh data from assimp
-				const aiMesh *mesh = meshHelperRef->mAiMesh;
+				const aiMesh *mesh = assimpMeshRef->mAiMesh;
 
-				std::vector< Vec3f > &vertices = meshHelperRef->mCachedTriMesh.getVertices();
+				std::vector< Vec3f > &vertices = assimpMeshRef->mCachedTriMesh.getVertices();
 				for( size_t v = 0; v < vertices.size(); ++v )
 					vertices[v] = fromAssimp( mesh->mVertices[ v ] );
 
-				std::vector< Vec3f > &normals = meshHelperRef->mCachedTriMesh.getNormals();
+				std::vector< Vec3f > &normals = assimpMeshRef->mCachedTriMesh.getNormals();
 				for( size_t v = 0; v < normals.size(); ++v )
 					normals[v] = fromAssimp( mesh->mNormals[ v ] );
 			}
 
-			meshHelperRef->mValidCache = true;
+			assimpMeshRef->mValidCache = true;
 		}
 	}
 }
@@ -772,11 +767,11 @@ void AssimpLoader::enableSkinning( bool enable /* = true */ )
 	{
 		AssimpNodeRef nodeRef = *it;
 
-		vector< AssimpMeshHelperRef >::const_iterator meshIt = nodeRef->mMeshes.begin();
+		vector< AssimpMeshRef >::const_iterator meshIt = nodeRef->mMeshes.begin();
 		for ( ; meshIt != nodeRef->mMeshes.end(); ++meshIt )
 		{
-			AssimpMeshHelperRef meshHelperRef = *meshIt;
-			meshHelperRef->mValidCache = false;
+			AssimpMeshRef assimpMeshRef = *meshIt;
+			assimpMeshRef->mValidCache = false;
 		}
 	}
 }
@@ -784,7 +779,7 @@ void AssimpLoader::enableSkinning( bool enable /* = true */ )
 void AssimpLoader::update()
 {
 	if ( mAnimationEnabled )
-		updateAnimation();
+		updateAnimation( mAnimationIndex, mAnimationTime );
 
 	if ( mSkinningEnabled )
 		updateSkinning();
@@ -803,42 +798,41 @@ void AssimpLoader::draw()
 	{
 		AssimpNodeRef nodeRef = *it;
 
-		vector< AssimpMeshHelperRef >::const_iterator meshIt = nodeRef->mMeshes.begin();
+		vector< AssimpMeshRef >::const_iterator meshIt = nodeRef->mMeshes.begin();
 		for ( ; meshIt != nodeRef->mMeshes.end(); ++meshIt )
 		{
-			AssimpMeshHelperRef meshHelperRef = *meshIt;
+			AssimpMeshRef assimpMeshRef = *meshIt;
 
 			// Texture Binding
-			if ( mTexturesEnabled && meshHelperRef->mTexture )
+			if ( mTexturesEnabled && assimpMeshRef->mTexture )
 			{
-				meshHelperRef->mTexture.enableAndBind();
+				assimpMeshRef->mTexture.enableAndBind();
 			}
 
 			if ( mMaterialsEnabled )
 			{
-				meshHelperRef->mMaterial.apply();
+				assimpMeshRef->mMaterial.apply();
 			}
 			else
 			{
-				gl::color( meshHelperRef->mMaterial.getDiffuse());
+				gl::color( assimpMeshRef->mMaterial.getDiffuse());
 			}
 
 			// Culling
-			if ( meshHelperRef->mTwoSided )
+			if ( assimpMeshRef->mTwoSided )
 				gl::enable( GL_CULL_FACE );
 			else
 				gl::disable( GL_CULL_FACE );
 
-			gl::draw( meshHelperRef->mCachedTriMesh );
+			gl::draw( assimpMeshRef->mCachedTriMesh );
 
 			// Texture Binding
-			if ( mTexturesEnabled && meshHelperRef->mTexture )
+			if ( mTexturesEnabled && assimpMeshRef->mTexture )
 			{
-				meshHelperRef->mTexture.unbind();
+				assimpMeshRef->mTexture.unbind();
 			}
 		}
 	}
-
 
 	glPopClientAttrib();
 	glPopAttrib();

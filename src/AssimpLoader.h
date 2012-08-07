@@ -2,16 +2,16 @@
  Copyright (C) 2011-2012 Gabor Papp
 
  This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 3 of the License, or
+ it under the terms of the GNU Lesser General Public License as published
+ by the Free Software Foundation; either version 3 of the License, or
  (at your option) any later version.
 
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+ GNU Lesser General Public License for more details.
 
- You should have received a copy of the GNU General Public License
+ You should have received a copy of the GNU Lesser General Public License
  along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
@@ -37,7 +37,7 @@
 #include "cinder/AxisAlignedBox.h"
 
 #include "Node.h"
-#include "AssimpMeshHelper.h"
+#include "AssimpMesh.h"
 
 namespace mndl { namespace assimp {
 
@@ -115,7 +115,7 @@ class AssimpLoaderExc : public std::exception
 class AssimpNode : public mndl::Node
 {
 	public:
-		std::vector< AssimpMeshHelperRef > mMeshes;
+		std::vector< AssimpMeshRef > mMeshes;
 };
 
 typedef std::shared_ptr< AssimpNode > AssimpNodeRef;
@@ -125,60 +125,101 @@ class AssimpLoader
 	public:
 		AssimpLoader() {}
 
-		/** Constructs and does the parsing of the file **/
+		//! Constructs and does the parsing of the file from \a filename.
 		AssimpLoader( ci::fs::path filename );
-		~AssimpLoader();
 
+		//! Updates model animation and skinning.
 		void update();
+		//! Draws all meshes in the model.
 		void draw();
 
+		//! Returns the bounding box of the static, not skinned mesh.
 		ci::AxisAlignedBox3f getBoundingBox() const { return mBoundingBox; }
 
+		//! Sets the orientation of this node via a quaternion.
 		void setNodeOrientation( const std::string &name, const ci::Quatf &rot );
+		//! Returns a quaternion representing the orientation of the node called \a name.
 		ci::Quatf getNodeOrientation( const std::string &name );
 
+		//! Returns the node called \a name.
 		AssimpNodeRef getAssimpNode( const std::string &name );
+		//! Returns the node called \a name.
 		const AssimpNodeRef getAssimpNode( const std::string &name ) const;
 
+		//! Returns the total number of meshes contained by the node called \a name.
 		size_t getAssimpNodeNumMeshes( const std::string &name );
+		//! Returns the \a n'th cinder::TriMesh contained by the node called \a name.
 		ci::TriMesh &getAssimpNodeMesh( const std::string &name, size_t n = 0 );
+		//! Returns the \a n'th cinder::TriMesh contained by the node called \a name.
 		const ci::TriMesh &getAssimpNodeMesh( const std::string &name, size_t n = 0 ) const;
+
+		//! Returns the texture of the \a n'th mesh in the node called \a name.
 		ci::gl::Texture &getAssimpNodeTexture( const std::string &name, size_t n = 0 );
+		//! Returns the texture of the \a n'th mesh in the node called \a name.
 		const ci::gl::Texture &getAssimpNodeTexture( const std::string &name, size_t n = 0 ) const;
+
+		//! Returns the material of the \a n'th mesh in the node called \a name.
 		ci::gl::Material &getAssimpNodeMaterial( const std::string &name, size_t n = 0 );
+		//! Returns the material of the \a n'th mesh in the node called \a name.
 		const ci::gl::Material &getAssimpNodeMaterial( const std::string &name, size_t n = 0 ) const;
 
+		//! Returns all node names in the model in a std::vector as std::string's.
 		const std::vector< std::string > &getNodeNames() { return mNodeNames; }
 
+		//! Enables/disables the usage of materials during draw.
 		void enableMaterials( bool enable = true ) { mMaterialsEnabled = enable; }
+		//! Disables the usage of materials during draw.
 		void disableMaterials() { mMaterialsEnabled = false; }
 
+		//! Enables/disables the usage of textures during draw.
 		void enableTextures( bool enable = true ) { mTexturesEnabled = enable; }
+		//! Disables the usage of textures during draw.
 		void disableTextures() { mTexturesEnabled = false; }
 
+		//! Enables/disables skinning, when the model's bones distort the vertices.
 		void enableSkinning( bool enable = true );
+		//! Disables skinning, when the model's bones distort the vertices.
 		void disableSkinning() { enableSkinning( false ); }
 
+		//! Enables/disables animation.
 		void enableAnimation( bool enable = true ) { mAnimationEnabled = enable; }
+		//! Disables animation.
 		void disableAnimation() { mAnimationEnabled = false; }
 
+		//! Returns the total number of meshes in the model.
 		size_t getNumMeshes() const { return mModelMeshes.size(); }
+		//! Returns the \a n'th mesh in the model.
 		ci::TriMesh &getMesh( size_t n ) { return mModelMeshes[ n ]->mCachedTriMesh; }
+		//! Returns the \a n'th mesh in the model.
 		const ci::TriMesh &getMesh( size_t n ) const { return mModelMeshes[ n ]->mCachedTriMesh; }
 
+		//! Returns the texture of the \a n'th mesh in the model.
 		ci::gl::Texture &getTexture( size_t n ) { return mModelMeshes[ n ]->mTexture; }
+		//! Returns the texture of the \a n'th mesh in the model.
 		const ci::gl::Texture &getTexture( size_t n ) const { return mModelMeshes[ n ]->mTexture; }
+
+		//! Returns the number of animations in the scene.
+		size_t getNumAnimations() const;
+
+		//! Sets the current animation index to \a n.
+		void setAnimation( size_t n );
+
+		//! Returns the duration of the \a n'th animation.
+		double getAnimationDuration( size_t n ) const;
+
+		//! Sets current animation time.
+		void setTime( double t );
 
 	private:
 		void loadAllMeshes();
 		AssimpNodeRef loadNodes( const aiNode* nd, AssimpNodeRef parentRef = AssimpNodeRef() );
-		AssimpMeshHelperRef convertAiMesh( const aiMesh *mesh );
+		AssimpMeshRef convertAiMesh( const aiMesh *mesh );
 
 		void calculateDimensions();
 		void calculateBoundingBox( ci::Vec3f *min, ci::Vec3f *max );
 		void calculateBoundingBoxForNode( const aiNode *nd, aiVector3D *min, aiVector3D *max, aiMatrix4x4 *trafo );
 
-		void updateAnimation();
+		void updateAnimation( size_t animationIndex, double currentTime );
 		void updateSkinning();
 		void updateMeshes();
 
@@ -191,7 +232,7 @@ class AssimpLoader
 		AssimpNodeRef mRootNode; /// root node of scene
 
 		std::vector< AssimpNodeRef > mMeshNodes; /// nodes with meshes
-		std::vector< AssimpMeshHelperRef > mModelMeshes; /// all meshes
+		std::vector< AssimpMeshRef > mModelMeshes; /// all meshes
 
 		std::vector< std::string > mNodeNames;
 		std::map< std::string, AssimpNodeRef > mNodeMap;
@@ -200,6 +241,9 @@ class AssimpLoader
 		bool mTexturesEnabled;
 		bool mSkinningEnabled;
 		bool mAnimationEnabled;
+
+		size_t mAnimationIndex;
+		double mAnimationTime;
 };
 
 } } // namespace mndl::assimp

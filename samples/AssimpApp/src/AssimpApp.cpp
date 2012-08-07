@@ -69,6 +69,8 @@ void AssimpApp::prepareSettings( Settings *settings )
 void AssimpApp::setup()
 {
 	mAssimpLoader = assimp::AssimpLoader( getAssetPath( "astroboy_walk.dae" ) );
+	mAssimpLoader.setAnimation( 0 );
+
 
 	CameraPersp cam;
 	cam.setPerspective( 60, getWindowAspectRatio(), 0.1f, 1000.0f );
@@ -97,6 +99,8 @@ void AssimpApp::update()
 	mAssimpLoader.enableSkinning( mEnableSkinning );
 	mAssimpLoader.enableAnimation( mEnableAnimation );
 
+	double time = fmod( getElapsedSeconds(), mAssimpLoader.getAnimationDuration( 0 ) );
+	mAssimpLoader.setTime( time );
 	mAssimpLoader.update();
 
 	mFps = getAverageFps();
