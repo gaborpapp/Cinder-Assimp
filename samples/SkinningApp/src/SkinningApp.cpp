@@ -98,14 +98,14 @@ void SkinningApp::setup()
 	mNodeIndex = 0;
 	mEnableWireframe = false;
 
-	mParams = params::InterfaceGl( "Parameters", Vec2i( 300, 300 ) );
+	mParams = params::InterfaceGl( "Parameters", Vec2i( 200, 300 ) );
 
 	setupParams();
 
 	CameraPersp cam;
 	cam.setPerspective( 60, getWindowAspectRatio(), 0.1f, 1000.0f );
-	cam.setEyePoint( Vec3f( 0, 7, 20 ) );
-	cam.setCenterOfInterestPoint( Vec3f( 0, 7, 0 ) );
+	cam.setEyePoint( Vec3f( 0, 5, 15 ) );
+	cam.setCenterOfInterestPoint( Vec3f( 0, 5, 0 ) );
 	mMayaCam.setCurrentCam( cam );
 }
 
