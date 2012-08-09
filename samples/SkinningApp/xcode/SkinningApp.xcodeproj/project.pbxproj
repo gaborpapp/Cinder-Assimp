@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 44;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -14,11 +14,11 @@
 		00B784B50FF439BC000DE1D7 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B784B10FF439BC000DE1D7 /* AudioUnit.framework */; };
 		00B784B60FF439BC000DE1D7 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B784B20FF439BC000DE1D7 /* CoreAudio.framework */; };
 		00CCAF15116A9FEE008396D5 /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 00CCAF14116A9FEE008396D5 /* CinderApp.icns */; };
-		1401A8F415D3C04000BDFDFB /* Node.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1401A8F315D3C04000BDFDFB /* Node.cpp */; };
-		1401A90215D3C56000BDFDFB /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 1401A90115D3C56000BDFDFB /* assets */; };
-		1410605613A0FDDE0007ED03 /* AssimpApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1410605513A0FDDE0007ED03 /* AssimpApp.cpp */; };
-		1410605813A0FE100007ED03 /* AssimpLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1410605713A0FE100007ED03 /* AssimpLoader.cpp */; };
-		1410607E13A101470007ED03 /* libassimp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1410607D13A101470007ED03 /* libassimp.a */; };
+		1463E0BE15D3C78700923DB9 /* SkinningApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1463E0BD15D3C78700923DB9 /* SkinningApp.cpp */; };
+		1463E0C415D3C79900923DB9 /* AssimpLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1463E0BF15D3C79900923DB9 /* AssimpLoader.cpp */; };
+		1463E0C515D3C79900923DB9 /* Node.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1463E0C215D3C79900923DB9 /* Node.cpp */; };
+		1463E0CB15D3C7D200923DB9 /* libassimp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1463E0CA15D3C7D200923DB9 /* libassimp.a */; };
+		1463E0D215D3C83A00923DB9 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 1463E0D115D3C83A00923DB9 /* assets */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		5323E6B60EAFCA7E003A9687 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B50EAFCA7E003A9687 /* QTKit.framework */; };
 		53E3CDFC0E86099300238D2B /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 53E3CDFB0E86099300238D2B /* Carbon.framework */; };
@@ -35,22 +35,22 @@
 		00CCAF14116A9FEE008396D5 /* CinderApp.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = CinderApp.icns; path = ../resources/CinderApp.icns; sourceTree = SOURCE_ROOT; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
-		1401A8F315D3C04000BDFDFB /* Node.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Node.cpp; path = ../../../src/Node.cpp; sourceTree = "<group>"; };
-		1401A8F615D3C25500BDFDFB /* AssimpLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AssimpLoader.h; path = ../../../src/AssimpLoader.h; sourceTree = "<group>"; };
-		1401A8F715D3C25500BDFDFB /* AssimpMesh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AssimpMesh.h; path = ../../../src/AssimpMesh.h; sourceTree = "<group>"; };
-		1401A8F815D3C25500BDFDFB /* Node.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Node.h; path = ../../../src/Node.h; sourceTree = "<group>"; };
-		1401A90115D3C56000BDFDFB /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = ../assets; sourceTree = "<group>"; };
-		1410605513A0FDDE0007ED03 /* AssimpApp.cpp */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.cpp.cpp; name = AssimpApp.cpp; path = ../src/AssimpApp.cpp; sourceTree = SOURCE_ROOT; };
-		1410605713A0FE100007ED03 /* AssimpLoader.cpp */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.cpp.cpp; name = AssimpLoader.cpp; path = ../../../src/AssimpLoader.cpp; sourceTree = SOURCE_ROOT; };
-		1410607D13A101470007ED03 /* libassimp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libassimp.a; path = ../../../lib/macosx/libassimp.a; sourceTree = SOURCE_ROOT; };
+		1463E0BD15D3C78700923DB9 /* SkinningApp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SkinningApp.cpp; path = ../src/SkinningApp.cpp; sourceTree = "<group>"; };
+		1463E0BF15D3C79900923DB9 /* AssimpLoader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AssimpLoader.cpp; path = ../../../src/AssimpLoader.cpp; sourceTree = "<group>"; };
+		1463E0C015D3C79900923DB9 /* AssimpLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AssimpLoader.h; path = ../../../src/AssimpLoader.h; sourceTree = "<group>"; };
+		1463E0C115D3C79900923DB9 /* AssimpMesh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AssimpMesh.h; path = ../../../src/AssimpMesh.h; sourceTree = "<group>"; };
+		1463E0C215D3C79900923DB9 /* Node.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Node.cpp; path = ../../../src/Node.cpp; sourceTree = "<group>"; };
+		1463E0C315D3C79900923DB9 /* Node.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Node.h; path = ../../../src/Node.h; sourceTree = "<group>"; };
+		1463E0CA15D3C7D200923DB9 /* libassimp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libassimp.a; path = ../../../lib/macosx/libassimp.a; sourceTree = "<group>"; };
+		1463E0D115D3C83A00923DB9 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = ../assets; sourceTree = "<group>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
-		32CA4F630368D1EE00C91783 /* AssimpApp_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AssimpApp_Prefix.pch; sourceTree = "<group>"; };
+		32CA4F630368D1EE00C91783 /* SkinningApp_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SkinningApp_Prefix.pch; sourceTree = "<group>"; };
 		5323E6B10EAFCA74003A9687 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
 		5323E6B50EAFCA7E003A9687 /* QTKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QTKit.framework; path = /System/Library/Frameworks/QTKit.framework; sourceTree = "<absolute>"; };
 		53E3CDFB0E86099300238D2B /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		8D1107320486CEB800E47090 /* AssimpApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AssimpApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D1107320486CEB800E47090 /* SkinningApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SkinningApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,7 +68,7 @@
 				00B784B40FF439BC000DE1D7 /* AudioToolbox.framework in Frameworks */,
 				00B784B50FF439BC000DE1D7 /* AudioUnit.framework in Frameworks */,
 				00B784B60FF439BC000DE1D7 /* CoreAudio.framework in Frameworks */,
-				1410607E13A101470007ED03 /* libassimp.a in Frameworks */,
+				1463E0CB15D3C7D200923DB9 /* libassimp.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,9 +78,9 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				1401A8F315D3C04000BDFDFB /* Node.cpp */,
-				1410605713A0FE100007ED03 /* AssimpLoader.cpp */,
-				1410605513A0FDDE0007ED03 /* AssimpApp.cpp */,
+				1463E0BF15D3C79900923DB9 /* AssimpLoader.cpp */,
+				1463E0C215D3C79900923DB9 /* Node.cpp */,
+				1463E0BD15D3C78700923DB9 /* SkinningApp.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -115,31 +115,31 @@
 		19C28FACFE9D520D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8D1107320486CEB800E47090 /* AssimpApp.app */,
+				8D1107320486CEB800E47090 /* SkinningApp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		29B97314FDCFA39411CA2CEA /* AssimpApp */ = {
+		29B97314FDCFA39411CA2CEA /* SkinningApp */ = {
 			isa = PBXGroup;
 			children = (
 				29B97315FDCFA39411CA2CEA /* Headers */,
 				080E96DDFE201D6D7F000001 /* Source */,
-				1401A90115D3C56000BDFDFB /* assets */,
+				1463E0D115D3C83A00923DB9 /* assets */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
 			);
-			name = AssimpApp;
+			name = SkinningApp;
 			sourceTree = "<group>";
 		};
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				1401A8F615D3C25500BDFDFB /* AssimpLoader.h */,
-				1401A8F715D3C25500BDFDFB /* AssimpMesh.h */,
-				1401A8F815D3C25500BDFDFB /* Node.h */,
-				32CA4F630368D1EE00C91783 /* AssimpApp_Prefix.pch */,
+				1463E0C015D3C79900923DB9 /* AssimpLoader.h */,
+				1463E0C115D3C79900923DB9 /* AssimpMesh.h */,
+				1463E0C315D3C79900923DB9 /* Node.h */,
+				32CA4F630368D1EE00C91783 /* SkinningApp_Prefix.pch */,
 			);
 			name = Headers;
 			sourceTree = "<group>";
@@ -156,7 +156,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				1410607D13A101470007ED03 /* libassimp.a */,
+				1463E0CA15D3C7D200923DB9 /* libassimp.a */,
 				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
 			);
@@ -166,9 +166,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		8D1107260486CEB800E47090 /* AssimpApp */ = {
+		8D1107260486CEB800E47090 /* SkinningApp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "AssimpApp" */;
+			buildConfigurationList = C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "SkinningApp" */;
 			buildPhases = (
 				8D1107290486CEB800E47090 /* Resources */,
 				8D11072C0486CEB800E47090 /* Sources */,
@@ -178,10 +178,10 @@
 			);
 			dependencies = (
 			);
-			name = AssimpApp;
+			name = SkinningApp;
 			productInstallPath = "$(HOME)/Applications";
-			productName = AssimpApp;
-			productReference = 8D1107320486CEB800E47090 /* AssimpApp.app */;
+			productName = SkinningApp;
+			productReference = 8D1107320486CEB800E47090 /* SkinningApp.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -189,18 +189,18 @@
 /* Begin PBXProject section */
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
-			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "AssimpApp" */;
-			compatibilityVersion = "Xcode 3.0";
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "SkinningApp" */;
+			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				en,
 			);
-			mainGroup = 29B97314FDCFA39411CA2CEA /* AssimpApp */;
+			mainGroup = 29B97314FDCFA39411CA2CEA /* SkinningApp */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				8D1107260486CEB800E47090 /* AssimpApp */,
+				8D1107260486CEB800E47090 /* SkinningApp */,
 			);
 		};
 /* End PBXProject section */
@@ -211,7 +211,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				00CCAF15116A9FEE008396D5 /* CinderApp.icns in Resources */,
-				1401A90215D3C56000BDFDFB /* assets in Resources */,
+				1463E0D215D3C83A00923DB9 /* assets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -222,9 +222,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1410605613A0FDDE0007ED03 /* AssimpApp.cpp in Sources */,
-				1410605813A0FE100007ED03 /* AssimpLoader.cpp in Sources */,
-				1401A8F415D3C04000BDFDFB /* Node.cpp in Sources */,
+				1463E0BE15D3C78700923DB9 /* SkinningApp.cpp in Sources */,
+				1463E0C415D3C79900923DB9 /* AssimpLoader.cpp in Sources */,
+				1463E0C515D3C79900923DB9 /* Node.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -236,12 +236,11 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = AssimpApp_Prefix.pch;
+				GCC_PREFIX_HEADER = SkinningApp_Prefix.pch;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
@@ -251,8 +250,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_LDFLAGS = "\"$(CINDER_PATH)/lib/libcinder_d.a\"";
-				PRODUCT_NAME = AssimpApp;
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
+				PRODUCT_NAME = SkinningApp;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -264,11 +262,11 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_FAST_MATH = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = AssimpApp_Prefix.pch;
+				GCC_PREFIX_HEADER = SkinningApp_Prefix.pch;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
@@ -278,8 +276,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_LDFLAGS = "\"$(CINDER_PATH)/lib/libcinder.a\"";
-				PRODUCT_NAME = AssimpApp;
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
+				PRODUCT_NAME = SkinningApp;
 				STRIP_INSTALLED_PRODUCT = YES;
 				WRAPPER_EXTENSION = app;
 			};
@@ -294,12 +291,9 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/boost\"";
-				LIBRARY_SEARCH_PATHS = "$(CINDER_PATH)/blocks/Cinder-Assimp/lib/macosx";
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				OTHER_LDFLAGS = "";
-				PREBINDING = NO;
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
-				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" ../include $(CINDER_PATH)/blocks/Cinder-Assimp/include $(CINDER_PATH)/blocks/Cinder-Assimp/include/assimp";
+				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
+				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" ../include";
 			};
 			name = Debug;
 		};
@@ -312,19 +306,16 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/boost\"";
-				LIBRARY_SEARCH_PATHS = "$(CINDER_PATH)/blocks/Cinder-Assimp/lib/macosx";
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				OTHER_LDFLAGS = "";
-				PREBINDING = NO;
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
-				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" ../include $(CINDER_PATH)/blocks/Cinder-Assimp/include $(CINDER_PATH)/blocks/Cinder-Assimp/include/assimp";
+				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
+				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" ../include";
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "AssimpApp" */ = {
+		C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "SkinningApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF4B08A954540054247B /* Debug */,
@@ -333,7 +324,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "AssimpApp" */ = {
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "SkinningApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF4F08A954540054247B /* Debug */,
