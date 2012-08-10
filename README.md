@@ -25,6 +25,7 @@ http://sourceforge.net/projects/assimp/files/assimp-3.0/assimp--3.0.1270-source-
 
 ####Build instructions on OSX
 
+<pre>
 unzip assimp--3.0.1270-source-only.zip
 cd assimp--3.0.1270-source-only
 mkdir build
@@ -33,6 +34,7 @@ cmake -DENABLE_BOOST_WORKAROUND=ON -DBUILD_STATIC_LIB=ON \
 	-D"CMAKE_OSX_ARCHITECTURES=i386;x86_64" \
 	-DCMAKE_CXX_FLAGS="-fvisibility-inlines-hidden" ..
 make
+</pre>
 
 which creates libassimp.a in the code/ directory.
 
