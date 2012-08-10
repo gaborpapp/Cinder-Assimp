@@ -40,5 +40,10 @@ which creates libassimp.a in the code/ directory.
 
 ####Build instructions on Windows
 
-...
+-unzip the file with an unzipper program: assimp--3.0.1270-source-only.zip
 
+in command window:
+cd assimp--3.0.1270-source-only
+cmake -DENABLE_BOOST_WORKAROUND=ON -DBUILD_STATIC_LIB=ON -G"Visual Studio 10"
+
+-compile the lib in Visual Studio 10
