@@ -64,7 +64,7 @@ static void fromAssimp( const aiMesh *aim, TriMesh *cim )
 	{
 		for ( unsigned i = 0; i < aim->mNumVertices; ++i )
 		{
-			cim->appendColorRGBA( fromAssimp( aim->mColors[0][i] ) );
+			cim->appendColorRgba( fromAssimp( aim->mColors[0][i] ) );
 		}
 	}
 
