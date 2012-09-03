@@ -503,8 +503,21 @@ void AssimpLoader::updateAnimation( size_t animationIndex, double currentTime )
 				frame++;
 			}
 
-			// TODO: (thom) interpolation maybe? This time maybe even logarithmic, not linear
-			presentScaling = channel->mScalingKeys[frame].mValue;
+			// interpolate between this frame's value and next frame's value
+			unsigned int nextFrame = (frame + 1) % channel->mNumScalingKeys;
+			const aiVectorKey& key = channel->mScalingKeys[ frame ];
+			const aiVectorKey& nextKey = channel->mScalingKeys[ nextFrame ];
+			double diffTime = nextKey.mTime - key.mTime;
+			if( diffTime < 0.0)
+				diffTime += mAnim->mDuration;
+			if( diffTime > 0)
+			{
+				float factor = float( (currentTime - key.mTime) / diffTime);
+				presentScaling = key.mValue + (nextKey.mValue - key.mValue) * factor;
+			} else
+			{
+				presentScaling = key.mValue;
+			}
 		}
 
 		targetNode->setOrientation( fromAssimp( presentRotation ) );
