@@ -799,6 +799,8 @@ void AssimpLoader::draw()
 		AssimpNodeRef nodeRef = *it;
 
 		vector< AssimpMeshRef >::const_iterator meshIt = nodeRef->mMeshes.begin();
+		gl::pushModelView();
+		gl::multModelView( nodeRef->getDerivedTransform() );
 		for ( ; meshIt != nodeRef->mMeshes.end(); ++meshIt )
 		{
 			AssimpMeshRef assimpMeshRef = *meshIt;
@@ -832,6 +834,7 @@ void AssimpLoader::draw()
 				assimpMeshRef->mTexture.unbind();
 			}
 		}
+		gl::popModelView();
 	}
 
 	glPopClientAttrib();
