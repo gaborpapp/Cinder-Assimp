@@ -32,7 +32,8 @@ mkdir build
 cd build
 cmake -DENABLE_BOOST_WORKAROUND=ON -DBUILD_STATIC_LIB=ON \
 	-D"CMAKE_OSX_ARCHITECTURES=i386;x86_64" \
-	-DCMAKE_CXX_FLAGS="-fvisibility-inlines-hidden" ..
+	-DCMAKE_CXX_FLAGS="-fvisibility-inlines-hidden" \
+	-DCMAKE_CXX_COMPILER=/usr/bin/g++ ..
 make
 </pre>
 
