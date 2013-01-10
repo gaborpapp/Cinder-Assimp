@@ -39,7 +39,7 @@ class AssimpApp : public AppBasic
 		void prepareSettings( Settings *settings );
 		void setup();
 
-		void resize( ResizeEvent event );
+		void resize();
 		void mouseDown( MouseEvent event );
 		void mouseDrag( MouseEvent event );
 
@@ -152,7 +152,7 @@ void AssimpApp::mouseDrag( MouseEvent event )
 	mMayaCam.mouseDrag( event.getPos(), event.isLeftDown(), event.isMiddleDown(), event.isRightDown() );
 }
 
-void AssimpApp::resize( ResizeEvent event )
+void AssimpApp::resize()
 {
 	CameraPersp cam = mMayaCam.getCamera();
 	cam.setAspectRatio( getWindowAspectRatio() );

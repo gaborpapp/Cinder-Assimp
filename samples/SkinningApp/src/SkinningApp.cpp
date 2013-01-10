@@ -40,7 +40,7 @@ class SkinningApp : public AppBasic
 		void prepareSettings( Settings *settings );
 		void setup();
 
-		void resize( ResizeEvent event );
+		void resize();
 		void mouseDown( MouseEvent event );
 		void mouseDrag( MouseEvent event );
 
@@ -195,7 +195,7 @@ void SkinningApp::mouseDrag( MouseEvent event )
 	mMayaCam.mouseDrag( event.getPos(), event.isLeftDown(), event.isMiddleDown(), event.isRightDown() );
 }
 
-void SkinningApp::resize( ResizeEvent event )
+void SkinningApp::resize()
 {
 	CameraPersp cam = mMayaCam.getCamera();
 	cam.setAspectRatio( getWindowAspectRatio() );
