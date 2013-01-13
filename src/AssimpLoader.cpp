@@ -111,8 +111,14 @@ AssimpLoader::AssimpLoader( fs::path filename ) :
 
 	calculateDimensions();
 
+	app::console() << "loading model " << mFilePath.filename().string() <<
+		" [" << mFilePath.string() << "] " << endl;
+
 	loadAllMeshes();
 	mRootNode = loadNodes( mScene->mRootNode );
+	loadCameras();
+
+	app::console() << "finished loading model " << mFilePath.filename().string() << endl;
 }
 
 void AssimpLoader::calculateDimensions()
@@ -392,8 +398,6 @@ AssimpMeshRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
 
 void AssimpLoader::loadAllMeshes()
 {
-	app::console() << "loading model " << mFilePath.filename().string() <<
-		" [" << mFilePath.string() << "] " << endl;
 	for ( unsigned i = 0; i < mScene->mNumMeshes; ++i )
 	{
 		string name = fromAssimp( mScene->mMeshes[ i ]->mName );
@@ -409,8 +413,34 @@ void AssimpLoader::loadAllMeshes()
 	animationTime = -1;
 	setNormalizedTime(0);
 #endif
+}
 
-	app::console() << "finished loading model " << mFilePath.filename().string() << endl;
+void AssimpLoader::loadCameras()
+{
+	for ( unsigned i = 0; i < mScene->mNumCameras; ++i )
+	{
+		aiCamera *aiCam = mScene->mCameras[ i ];
+		string cameraName = fromAssimp( aiCam->mName );
+		app::console() << "loading camera " << i;
+		if ( cameraName != "" )
+			app::console() << " [" << cameraName << "]";
+		app::console() << endl;
+		AssimpNodeRef cameraNode = getAssimpNode( cameraName );
+		Quatf nodeOri = cameraNode->getDerivedOrientation();
+		Vec3f nodePos = cameraNode->getDerivedPosition();
+
+		CameraPersp cam;
+		if ( aiCam->mAspect != 0.f )
+			cam.setAspectRatio( aiCam->mAspect );
+		cam.setNearClip( aiCam->mClipPlaneNear );
+		cam.setFarClip( aiCam->mClipPlaneFar );
+		cam.setFov( toDegrees( aiCam->mHorizontalFOV ) );
+		app::console() << aiCam->mClipPlaneFar << " " << aiCam->mHorizontalFOV << endl;
+		cam.setWorldUp( fromAssimp( aiCam->mUp ) * nodeOri );
+		cam.setEyePoint( fromAssimp( aiCam->mPosition ) + nodePos );
+		cam.setViewDirection( fromAssimp( aiCam->mLookAt ) * nodeOri );
+		mCameras.push_back( cam );
+	}
 }
 
 void AssimpLoader::updateAnimation( size_t animationIndex, double currentTime )
@@ -839,9 +869,9 @@ void AssimpLoader::draw()
 
 			// Culling
 			if ( assimpMeshRef->mTwoSided )
-				gl::enable( GL_CULL_FACE );
-			else
 				gl::disable( GL_CULL_FACE );
+			else
+				gl::enable( GL_CULL_FACE );
 
 			gl::draw( assimpMeshRef->mCachedTriMesh );
 

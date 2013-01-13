@@ -30,6 +30,7 @@
 #include "assimp/postprocess.h"
 //*/
 
+#include "cinder/Camera.h"
 #include "cinder/Cinder.h"
 #include "cinder/Color.h"
 #include "cinder/TriMesh.h"
@@ -210,10 +211,17 @@ class AssimpLoader
 		//! Sets current animation time.
 		void setTime( double t );
 
+		//! Returns the number of cameras in the scene.
+		size_t getNumCameras() const { return mCameras.size(); }
+
+		//! Returns the \a n'th camera in the model.
+		const ci::CameraPersp &getCamera( size_t n ) const { return mCameras[ n ]; }
+
 	private:
 		void loadAllMeshes();
 		AssimpNodeRef loadNodes( const aiNode* nd, AssimpNodeRef parentRef = AssimpNodeRef() );
 		AssimpMeshRef convertAiMesh( const aiMesh *mesh );
+		void loadCameras();
 
 		void calculateDimensions();
 		void calculateBoundingBox( ci::Vec3f *min, ci::Vec3f *max );
@@ -233,6 +241,7 @@ class AssimpLoader
 
 		std::vector< AssimpNodeRef > mMeshNodes; /// nodes with meshes
 		std::vector< AssimpMeshRef > mModelMeshes; /// all meshes
+		std::vector< ci::CameraPersp > mCameras;
 
 		std::vector< std::string > mNodeNames;
 		std::map< std::string, AssimpNodeRef > mNodeMap;
