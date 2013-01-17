@@ -217,6 +217,8 @@ class AssimpLoader
 		//! Returns the \a n'th camera in the model.
 		const ci::CameraPersp &getCamera( size_t n ) const { return mCameras[ n ]; }
 
+		const std::string getCameraName( size_t n ) const;
+
 	private:
 		void loadAllMeshes();
 		AssimpNodeRef loadNodes( const aiNode* nd, AssimpNodeRef parentRef = AssimpNodeRef() );

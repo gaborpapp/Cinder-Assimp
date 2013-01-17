@@ -20,6 +20,8 @@
 
 #include <assert.h>
 
+#include <boost/algorithm/string.hpp>
+
 #include "cinder/app/App.h"
 #include "cinder/ImageIo.h"
 #include "cinder/CinderMath.h"
@@ -370,7 +372,20 @@ AssimpMeshRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
 			}
 		}
 
-		assimpMeshRef->mTexture = gl::Texture( loadImage( realPath ), format );
+		string ext = realPath.extension().string();
+		boost::algorithm::to_lower( ext );
+		if ( ext == ".dds" )
+		{
+			// FIXME: loadDds does not seem to work with mipmaps in the latest cinder version
+			// fix based on the work of javi.agenjo, https://github.com/gaborpapp/Cinder/commit/3e7302
+			assimpMeshRef->mTexture = gl::Texture::loadDds( loadFile( realPath )->createStream(), format );
+			if ( !assimpMeshRef->mTexture )
+				app::console() << "failed to laod dds..." << endl;
+		}
+		else
+		{
+			assimpMeshRef->mTexture = gl::Texture( loadImage( realPath ), format );
+		}
 	}
 
 	assimpMeshRef->mAiMesh = mesh;
@@ -415,6 +430,11 @@ void AssimpLoader::loadAllMeshes()
 #endif
 }
 
+const string AssimpLoader::getCameraName( size_t n ) const
+{
+	return fromAssimp( mScene->mCameras[ n ]->mName );
+}
+
 void AssimpLoader::loadCameras()
 {
 	for ( unsigned i = 0; i < mScene->mNumCameras; ++i )
@@ -435,7 +455,6 @@ void AssimpLoader::loadCameras()
 		cam.setNearClip( aiCam->mClipPlaneNear );
 		cam.setFarClip( aiCam->mClipPlaneFar );
 		cam.setFov( toDegrees( aiCam->mHorizontalFOV ) );
-		app::console() << aiCam->mClipPlaneFar << " " << aiCam->mHorizontalFOV << endl;
 		cam.setWorldUp( fromAssimp( aiCam->mUp ) * nodeOri );
 		cam.setEyePoint( fromAssimp( aiCam->mPosition ) + nodePos );
 		cam.setViewDirection( fromAssimp( aiCam->mLookAt ) * nodeOri );
