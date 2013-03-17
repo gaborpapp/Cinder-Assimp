@@ -75,6 +75,10 @@ class Node
 
 		void requestUpdate();
 
+		void show( bool visible = true );
+		void hide();
+		bool isVisible() const;
+
 	protected:
 		/// Shared pointer to parent node.
 		NodeRef mParent;
@@ -129,6 +133,9 @@ class Node
 
 		/// Cached derived transform as a 4x4 matrix
 		mutable ci::Matrix44f mDerivedTransform;
+
+		/// Stores whether the node is rendered.
+		bool mVisible;
 
 		void update() const;
 };

@@ -860,6 +860,9 @@ void AssimpLoader::draw()
 	{
 		AssimpNodeRef nodeRef = *it;
 
+		if ( !nodeRef->isVisible() )
+			continue;
+
 		vector< AssimpMeshRef >::const_iterator meshIt = nodeRef->mMeshes.begin();
 		for ( ; meshIt != nodeRef->mMeshes.end(); ++meshIt )
 		{

@@ -26,7 +26,8 @@ Node::Node() :
 	mScale( Vec3f::one() ),
 	mInheritOrientation( true ),
 	mInheritScale( true ),
-	mNeedsUpdate( true )
+	mNeedsUpdate( true ),
+	mVisible( true )
 {
 }
 
@@ -35,7 +36,8 @@ Node::Node( const std::string &name ) :
 	mScale( Vec3f::one() ),
 	mInheritOrientation( true ),
 	mInheritScale( true ),
-	mNeedsUpdate( true )
+	mNeedsUpdate( true ),
+	mVisible( true )
 {
 }
 
@@ -237,6 +239,21 @@ void Node::requestUpdate()
 	{
 		(*it)->requestUpdate();
 	}
+}
+
+void Node::show( bool visible )
+{
+	mVisible = visible;
+}
+
+void Node::hide()
+{
+	mVisible = false;
+}
+
+bool Node::isVisible() const
+{
+	return mVisible;
 }
 
 } // namespace mndl
