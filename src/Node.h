@@ -41,6 +41,9 @@ class Node
 		void setParent( NodeRef parent );
 		NodeRef getParent() const;
 
+		const std::vector< NodeRef > &getChildren() const { return mChildren; }
+		std::vector< NodeRef > &getChildren() { return mChildren; }
+
 		void addChild( NodeRef child );
 
 		void setOrientation( const ci::Quatf &q );
