@@ -120,10 +120,14 @@ class AssimpNode : public mndl::Node
 };
 
 typedef std::shared_ptr< AssimpNode > AssimpNodeRef;
+typedef std::shared_ptr< class AssimpLoader > AssimpLoaderRef;
 
 class AssimpLoader
 {
 	public:
+		//! Create analog for constructor from \a filename.
+		static AssimpLoaderRef create( ci::fs::path filename ) { return AssimpLoaderRef( new AssimpLoader( filename ) ); }
+
 		AssimpLoader() {}
 
 		//! Constructs and does the parsing of the file from \a filename.
