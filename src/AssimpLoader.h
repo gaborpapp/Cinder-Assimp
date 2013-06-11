@@ -217,6 +217,7 @@ class AssimpLoader
 		//! Returns the \a n'th camera in the model.
 		const ci::CameraPersp &getCamera( size_t n ) const { return mCameras[ n ]; }
 
+		//! Returns the name of the \a n'th camera in the model.
 		const std::string getCameraName( size_t n ) const;
 
 	private:
