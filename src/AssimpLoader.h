@@ -146,6 +146,11 @@ class AssimpLoader
 		//! Returns a quaternion representing the orientation of the node called \a name.
 		ci::Quatf getNodeOrientation( const std::string &name );
 
+		//! Returns the root node.
+		AssimpNodeRef getRootNode() { return mRootNode; }
+		//! Returns the root node.
+		const AssimpNodeRef getRootNode() const { return mRootNode; };
+
 		//! Returns the node called \a name.
 		AssimpNodeRef getAssimpNode( const std::string &name );
 		//! Returns the node called \a name.

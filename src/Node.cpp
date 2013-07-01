@@ -186,6 +186,64 @@ const Matrix44f &Node::getDerivedTransform() const
     return mDerivedTransform;
 }
 
+Quatf Node::convertWorldToLocalOrientation( const Quatf &worldOrientation ) const
+{
+	if ( mParent && mInheritOrientation )
+	{
+		const Quatf &parentOrientation = mParent->getDerivedOrientation();
+		return worldOrientation * parentOrientation.inverse();
+	}
+	else
+	{
+		return worldOrientation;
+	}
+}
+
+Quatf Node::convertLocalToWorldOrientation( const Quatf &localOrientation ) const
+{
+	if ( mParent && mInheritOrientation )
+	{
+		const Quatf &parentOrientation = mParent->getDerivedOrientation();
+		return getOrientation() * parentOrientation;
+	}
+	else
+	{
+		return localOrientation;
+	}
+}
+
+Vec3f Node::convertWorldToLocalPosition( const Vec3f &worldPos ) const
+{
+	if ( mParent )
+	{
+		const Quatf &parentOrientation = mParent->getDerivedOrientation();
+		const Vec3f &parentScale = mParent->getDerivedScale();
+		const Vec3f &parentPosition = mParent->getDerivedPosition();
+
+		return ( ( worldPos - parentPosition ) / parentScale ) * parentOrientation.inverse();
+	}
+	else
+	{
+		return worldPos;
+	}
+}
+
+Vec3f Node::convertLocalToWorldPosition( const Vec3f &localPos ) const
+{
+	if ( mParent )
+	{
+		const Quatf &parentOrientation = mParent->getDerivedOrientation();
+		const Vec3f &parentScale = mParent->getDerivedScale();
+		const Vec3f &parentPosition = mParent->getDerivedPosition();
+
+		return ( parentScale * localPos ) * parentOrientation + parentPosition;
+	}
+	else
+	{
+		return localPos;
+	}
+}
+
 void Node::update() const
 {
     if ( mParent )

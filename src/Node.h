@@ -76,6 +76,15 @@ class Node
 
 		const ci::Matrix44f &getDerivedTransform() const;
 
+		//! Returns the local orientation of the given world-space orientation \a worldOrientation relative to this node
+		ci::Quatf convertWorldToLocalOrientation( const ci::Quatf &worldOrientation ) const;
+		//! Returns the world orientation of a point in the local space of the node
+		ci::Quatf convertLocalToWorldOrientation( const ci::Quatf &localOrientation ) const;
+		//! Returns the local position of the given world-space position \a worldPos relative to this node
+		ci::Vec3f convertWorldToLocalPosition( const ci::Vec3f &worldPos ) const;
+		//! Returns the world position of a point in the local space of the node
+		ci::Vec3f convertLocalToWorldPosition( const ci::Vec3f &localPos ) const;
+
 		void requestUpdate();
 
 		void show( bool visible = true );
