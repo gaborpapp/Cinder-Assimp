@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2011-2012 Gabor Papp
+ Copyright (C) 2011-2013 Gabor Papp
 
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU Lesser General Public License as published
@@ -13,6 +13,10 @@
 
  You should have received a copy of the GNU Lesser General Public License
  along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+ Based on the Node system of OGRE (Object-oriented Graphics Rendering Engine)
+ <http://www.ogre3d.org/>
+ Copyright (c) 2000-2013 Torus Knot Software Ltd
 */
 
 #include "Node.h"
@@ -188,60 +192,34 @@ const Matrix44f &Node::getDerivedTransform() const
 
 Quatf Node::convertWorldToLocalOrientation( const Quatf &worldOrientation ) const
 {
-	if ( mParent && mInheritOrientation )
-	{
-		const Quatf &parentOrientation = mParent->getDerivedOrientation();
-		return worldOrientation * parentOrientation.inverse();
-	}
-	else
-	{
-		return worldOrientation;
-	}
+	if ( mNeedsUpdate )
+		update();
+
+	return mDerivedOrientation.inverse() * worldOrientation;
 }
 
 Quatf Node::convertLocalToWorldOrientation( const Quatf &localOrientation ) const
 {
-	if ( mParent && mInheritOrientation )
-	{
-		const Quatf &parentOrientation = mParent->getDerivedOrientation();
-		return getOrientation() * parentOrientation;
-	}
-	else
-	{
-		return localOrientation;
-	}
+	if ( mNeedsUpdate )
+		update();
+
+	return mDerivedOrientation * localOrientation;
 }
 
 Vec3f Node::convertWorldToLocalPosition( const Vec3f &worldPos ) const
 {
-	if ( mParent )
-	{
-		const Quatf &parentOrientation = mParent->getDerivedOrientation();
-		const Vec3f &parentScale = mParent->getDerivedScale();
-		const Vec3f &parentPosition = mParent->getDerivedPosition();
+	if ( mNeedsUpdate )
+		update();
 
-		return ( ( worldPos - parentPosition ) / parentScale ) * parentOrientation.inverse();
-	}
-	else
-	{
-		return worldPos;
-	}
+	return mDerivedOrientation.inverse() * ( worldPos - mDerivedPosition ) / mDerivedScale;
 }
 
 Vec3f Node::convertLocalToWorldPosition( const Vec3f &localPos ) const
 {
-	if ( mParent )
-	{
-		const Quatf &parentOrientation = mParent->getDerivedOrientation();
-		const Vec3f &parentScale = mParent->getDerivedScale();
-		const Vec3f &parentPosition = mParent->getDerivedPosition();
+	if ( mNeedsUpdate )
+		update();
 
-		return ( parentScale * localPos ) * parentOrientation + parentPosition;
-	}
-	else
-	{
-		return localPos;
-	}
+	return ( mDerivedOrientation * ( localPos * mDerivedScale )) + mDerivedPosition;
 }
 
 void Node::update() const
