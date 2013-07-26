@@ -229,6 +229,9 @@ class AssimpLoader
 		//! Returns the name of the \a n'th camera in the model.
 		const std::string getCameraName( size_t n ) const;
 
+		//! Returns the Assimp scene.
+		const aiScene *getAiScene() const { return mScene; }
+
 	private:
 		void loadAllMeshes();
 		AssimpNodeRef loadNodes( const aiNode* nd, AssimpNodeRef parentRef = AssimpNodeRef() );
