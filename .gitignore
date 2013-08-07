@@ -1,0 +1,6 @@
+.sconsign.dblite
+*.o
+samples/*/*/AssimpApp
+samples/*/*/AssimpApp.app
+samples/*/*/SkinningApp
+samples/*/*/SkinningApp.app
