@@ -42,8 +42,8 @@ class Node
 		Node( const std::string &name );
 		virtual ~Node() {};
 
-		void setParent( NodeRef parent );
-		NodeRef getParent() const;
+		void setParent( std::weak_ptr< Node > parent );
+		std::weak_ptr< Node > getParent() const;
 
 		const std::vector< NodeRef > &getChildren() const { return mChildren; }
 		std::vector< NodeRef > &getChildren() { return mChildren; }
@@ -96,8 +96,8 @@ class Node
 		bool isVisible() const;
 
 	protected:
-		/// Shared pointer to parent node.
-		NodeRef mParent;
+		/// Pointer to parent node.
+		std::weak_ptr< Node > mParentWeak;
 
 		/// Shared pointer vector holding the children.
 		std::vector< NodeRef > mChildren;

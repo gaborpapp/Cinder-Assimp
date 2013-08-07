@@ -45,15 +45,15 @@ Node::Node( const std::string &name ) :
 {
 }
 
-void Node::setParent( NodeRef parent )
+void Node::setParent( std::weak_ptr< Node > parent )
 {
-	mParent = parent;
+	mParentWeak = parent;
 	requestUpdate();
 }
 
-NodeRef Node::getParent() const
+std::weak_ptr< Node > Node::getParent() const
 {
-	return mParent;
+	return mParentWeak;
 }
 
 void Node::addChild( NodeRef child )
@@ -224,10 +224,11 @@ Vec3f Node::convertLocalToWorldPosition( const Vec3f &localPos ) const
 
 void Node::update() const
 {
-    if ( mParent )
+	auto parent = mParentWeak.lock();
+    if ( parent )
     {
         // update orientation
-        const Quatf &parentOrientation = mParent->getDerivedOrientation();
+        const Quatf &parentOrientation = parent->getDerivedOrientation();
         if ( mInheritOrientation )
         {
             // Combine orientation with that of parent
@@ -239,7 +240,7 @@ void Node::update() const
         }
 
         // update scale
-        const Vec3f &parentScale = mParent->getDerivedScale();
+        const Vec3f &parentScale = parent->getDerivedScale();
         if ( mInheritScale )
         {
             mDerivedScale = parentScale * getScale();
@@ -253,7 +254,7 @@ void Node::update() const
         mDerivedPosition = ( parentScale * getPosition() ) * parentOrientation;
 
         // add altered position vector to parent's
-        mDerivedPosition += mParent->getDerivedPosition();
+        mDerivedPosition += parent->getDerivedPosition();
     }
     else
     {
