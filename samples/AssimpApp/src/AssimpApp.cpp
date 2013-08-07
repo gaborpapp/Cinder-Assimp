@@ -139,7 +139,7 @@ void AssimpApp::draw()
 	if ( mDrawBBox )
 		gl::drawStrokedCube( mAssimpLoader.getBoundingBox() );
 
-	params::InterfaceGl::draw();
+	mParams.draw();
 }
 
 void AssimpApp::mouseDown( MouseEvent event )

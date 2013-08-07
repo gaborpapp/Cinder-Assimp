@@ -182,7 +182,7 @@ void SkinningApp::draw()
 	if ( mEnableWireframe )
 		gl::disableWireframe();
 
-	params::InterfaceGl::draw();
+	mParams.draw();
 }
 
 void SkinningApp::mouseDown( MouseEvent event )
