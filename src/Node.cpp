@@ -183,11 +183,11 @@ const Matrix44f &Node::getDerivedTransform() const
 	if ( mNeedsUpdate )
 		update();
 
-    mDerivedTransform = Matrix44f::createScale( mDerivedScale );
-    mDerivedTransform *= mDerivedOrientation.toMatrix44();
-    mDerivedTransform.setTranslate( mDerivedPosition );
+	mDerivedTransform = Matrix44f::createScale( mDerivedScale );
+	mDerivedTransform *= mDerivedOrientation.toMatrix44();
+	mDerivedTransform.setTranslate( mDerivedPosition );
 
-    return mDerivedTransform;
+	return mDerivedTransform;
 }
 
 Quatf Node::convertWorldToLocalOrientation( const Quatf &worldOrientation ) const
@@ -225,44 +225,44 @@ Vec3f Node::convertLocalToWorldPosition( const Vec3f &localPos ) const
 void Node::update() const
 {
 	auto parent = mParentWeak.lock();
-    if ( parent )
-    {
-        // update orientation
-        const Quatf &parentOrientation = parent->getDerivedOrientation();
-        if ( mInheritOrientation )
-        {
-            // Combine orientation with that of parent
-            mDerivedOrientation = getOrientation() * parentOrientation;
-        }
-        else
-        {
-            mDerivedOrientation = getOrientation();
-        }
+	if ( parent )
+	{
+		// update orientation
+		const Quatf &parentOrientation = parent->getDerivedOrientation();
+		if ( mInheritOrientation )
+		{
+			// Combine orientation with that of parent
+			mDerivedOrientation = getOrientation() * parentOrientation;
+		}
+		else
+		{
+			mDerivedOrientation = getOrientation();
+		}
 
-        // update scale
-        const Vec3f &parentScale = parent->getDerivedScale();
-        if ( mInheritScale )
-        {
-            mDerivedScale = parentScale * getScale();
-        }
-        else
-        {
-            mDerivedScale = getScale();
-        }
+		// update scale
+		const Vec3f &parentScale = parent->getDerivedScale();
+		if ( mInheritScale )
+		{
+			mDerivedScale = parentScale * getScale();
+		}
+		else
+		{
+			mDerivedScale = getScale();
+		}
 
 		// change position vector based on parent's orientation & scale
-        mDerivedPosition = ( parentScale * getPosition() ) * parentOrientation;
+		mDerivedPosition = ( parentScale * getPosition() ) * parentOrientation;
 
-        // add altered position vector to parent's
-        mDerivedPosition += parent->getDerivedPosition();
-    }
-    else
-    {
-        // root node, no parent
-        mDerivedOrientation = getOrientation();
-        mDerivedPosition = getPosition();
-        mDerivedScale = getScale();
-    }
+		// add altered position vector to parent's
+		mDerivedPosition += parent->getDerivedPosition();
+	}
+	else
+	{
+		// root node, no parent
+		mDerivedOrientation = getOrientation();
+		mDerivedPosition = getPosition();
+		mDerivedScale = getScale();
+	}
 
 	mNeedsUpdate = false;
 }
