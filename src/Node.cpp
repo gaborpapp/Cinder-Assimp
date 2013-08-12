@@ -232,7 +232,7 @@ void Node::update() const
 		if ( mInheritOrientation )
 		{
 			// Combine orientation with that of parent
-			mDerivedOrientation = getOrientation() * parentOrientation;
+			mDerivedOrientation = parentOrientation * getOrientation();
 		}
 		else
 		{
