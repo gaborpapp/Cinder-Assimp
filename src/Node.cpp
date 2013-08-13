@@ -195,7 +195,7 @@ Quatf Node::convertWorldToLocalOrientation( const Quatf &worldOrientation ) cons
 	if ( mNeedsUpdate )
 		update();
 
-	return mDerivedOrientation.inverse() * worldOrientation;
+	return worldOrientation * mDerivedOrientation.inverse();
 }
 
 Quatf Node::convertLocalToWorldOrientation( const Quatf &localOrientation ) const
@@ -203,7 +203,7 @@ Quatf Node::convertLocalToWorldOrientation( const Quatf &localOrientation ) cons
 	if ( mNeedsUpdate )
 		update();
 
-	return mDerivedOrientation * localOrientation;
+	return localOrientation * mDerivedOrientation;
 }
 
 Vec3f Node::convertWorldToLocalPosition( const Vec3f &worldPos ) const
@@ -211,7 +211,7 @@ Vec3f Node::convertWorldToLocalPosition( const Vec3f &worldPos ) const
 	if ( mNeedsUpdate )
 		update();
 
-	return mDerivedOrientation.inverse() * ( worldPos - mDerivedPosition ) / mDerivedScale;
+	return ( ( worldPos - mDerivedPosition ) / mDerivedScale ) * mDerivedOrientation.inverse();
 }
 
 Vec3f Node::convertLocalToWorldPosition( const Vec3f &localPos ) const
@@ -219,7 +219,7 @@ Vec3f Node::convertLocalToWorldPosition( const Vec3f &localPos ) const
 	if ( mNeedsUpdate )
 		update();
 
-	return ( mDerivedOrientation * ( localPos * mDerivedScale )) + mDerivedPosition;
+	return ( ( localPos * mDerivedScale ) * mDerivedOrientation ) + mDerivedPosition;
 }
 
 void Node::update() const
@@ -232,7 +232,7 @@ void Node::update() const
 		if ( mInheritOrientation )
 		{
 			// Combine orientation with that of parent
-			mDerivedOrientation = parentOrientation * getOrientation();
+			mDerivedOrientation = getOrientation() * parentOrientation;
 		}
 		else
 		{
