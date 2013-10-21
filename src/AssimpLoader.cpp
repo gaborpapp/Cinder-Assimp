@@ -489,9 +489,13 @@ void AssimpLoader::loadLights()
 			default:
 				continue;
 		}
+		AssimpNodeRef lightNode = getAssimpNode( lightName );
+		Quatf nodeOri = lightNode->getDerivedOrientation();
+		Vec3f nodePos = lightNode->getDerivedPosition();
+
 		light.setAttenuation( aiLt->mAttenuationConstant, aiLt->mAttenuationLinear, aiLt->mAttenuationQuadratic );
-		light.setDirection( fromAssimp( aiLt->mDirection ) );
-		light.setPosition( fromAssimp( aiLt->mPosition ) );
+		light.setDirection( fromAssimp( aiLt->mDirection ) * nodeOri );
+		light.setPosition( fromAssimp( aiLt->mPosition ) + nodePos );
 		light.setSpotCutoff( toDegrees( aiLt->mAngleOuterCone ) );
 		light.setAmbient( fromAssimp( aiLt->mColorAmbient ) );
 		light.setDiffuse( fromAssimp( aiLt->mColorDiffuse ) );
