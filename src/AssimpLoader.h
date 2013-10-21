@@ -36,6 +36,7 @@
 #include "cinder/TriMesh.h"
 #include "cinder/Stream.h"
 #include "cinder/AxisAlignedBox.h"
+#include "cinder/gl/Light.h"
 
 #include "Node.h"
 #include "AssimpMesh.h"
@@ -73,6 +74,11 @@ inline aiMatrix4x4 toAssimp( const ci::Matrix44f &m )
 inline aiQuaternion toAssimp( const ci::Quatf &q )
 {
     return aiQuaternion( q.w, q.v.x, q.v.y, q.v.z );
+}
+
+inline ci::Colorf fromAssimp( const aiColor3D &c )
+{
+    return ci::Colorf( c.r, c.g, c.b );
 }
 
 inline ci::ColorAf fromAssimp( const aiColor4D &c )
@@ -226,8 +232,23 @@ class AssimpLoader
 		//! Returns the \a n'th camera in the model.
 		const ci::CameraPersp &getCamera( size_t n ) const { return mCameras[ n ]; }
 
+		//! Returns the cameras in the model.
+		const std::vector< ci::CameraPersp > & getCameras() const { return mCameras; }
+
 		//! Returns the name of the \a n'th camera in the model.
 		const std::string getCameraName( size_t n ) const;
+
+		//! Returns the number of lights in the scene.
+		size_t getNumLights() const { return mLights.size(); }
+
+		//! Returns the \a n'th light in the model.
+		const ci::gl::Light &getLight( size_t n ) const { return mLights[ n ]; }
+
+		//! Returns the ligths in the model.
+		const std::vector< ci::gl::Light > & getLights() const { return mLights; }
+
+		//! Returns the name of the \a n'th light in the model.
+		const std::string getLightName( size_t n ) const;
 
 		//! Returns the Assimp scene.
 		const aiScene *getAiScene() const { return mScene; }
@@ -237,6 +258,7 @@ class AssimpLoader
 		AssimpNodeRef loadNodes( const aiNode* nd, AssimpNodeRef parentRef = AssimpNodeRef() );
 		AssimpMeshRef convertAiMesh( const aiMesh *mesh );
 		void loadCameras();
+		void loadLights();
 
 		void calculateDimensions();
 		void calculateBoundingBox( ci::Vec3f *min, ci::Vec3f *max );
@@ -257,6 +279,7 @@ class AssimpLoader
 		std::vector< AssimpNodeRef > mMeshNodes; /// nodes with meshes
 		std::vector< AssimpMeshRef > mModelMeshes; /// all meshes
 		std::vector< ci::CameraPersp > mCameras;
+		std::vector< ci::gl::Light > mLights;
 
 		std::vector< std::string > mNodeNames;
 		std::map< std::string, AssimpNodeRef > mNodeMap;

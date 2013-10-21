@@ -119,6 +119,7 @@ AssimpLoader::AssimpLoader( fs::path filename ) :
 	loadAllMeshes();
 	mRootNode = loadNodes( mScene->mRootNode );
 	loadCameras();
+	loadLights();
 
 	app::console() << "finished loading model " << mFilePath.filename().string() << endl;
 }
@@ -460,6 +461,48 @@ void AssimpLoader::loadCameras()
 		cam.setViewDirection( fromAssimp( aiCam->mLookAt ) * nodeOri );
 		mCameras.push_back( cam );
 	}
+}
+
+void AssimpLoader::loadLights()
+{
+	for ( unsigned i = 0; i < mScene->mNumLights; ++i )
+	{
+		aiLight *aiLt = mScene->mLights[ i ];
+		string lightName = fromAssimp( aiLt->mName );
+		app::console() << "loading light " << i;
+		if ( lightName != "" )
+			app::console() << " [" << lightName << "]";
+		app::console() << endl;
+
+		gl::Light light( 0, 0 );
+		switch ( aiLt->mType )
+		{
+			case aiLightSource_DIRECTIONAL:
+				light = gl::Light( gl::Light::DIRECTIONAL, i );
+				break;
+			case aiLightSource_POINT:
+				light = gl::Light( gl::Light::POINT, i );
+				break;
+			case aiLightSource_SPOT:
+				light = gl::Light( gl::Light::SPOTLIGHT, i );
+				break;
+			default:
+				continue;
+		}
+		light.setAttenuation( aiLt->mAttenuationConstant, aiLt->mAttenuationLinear, aiLt->mAttenuationQuadratic );
+		light.setDirection( fromAssimp( aiLt->mDirection ) );
+		light.setPosition( fromAssimp( aiLt->mPosition ) );
+		light.setSpotCutoff( toDegrees( aiLt->mAngleOuterCone ) );
+		light.setAmbient( fromAssimp( aiLt->mColorAmbient ) );
+		light.setDiffuse( fromAssimp( aiLt->mColorDiffuse ) );
+		light.setSpecular( fromAssimp( aiLt->mColorSpecular ) );
+		mLights.push_back( light );
+	}
+}
+
+const string AssimpLoader::getLightName( size_t n ) const
+{
+	return fromAssimp( mScene->mLights[ n ]->mName );
 }
 
 void AssimpLoader::updateAnimation( size_t animationIndex, double currentTime )
