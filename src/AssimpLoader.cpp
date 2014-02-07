@@ -455,7 +455,7 @@ void AssimpLoader::loadCameras()
 			cam.setAspectRatio( aiCam->mAspect );
 		cam.setNearClip( aiCam->mClipPlaneNear );
 		cam.setFarClip( aiCam->mClipPlaneFar );
-		cam.setFov( toDegrees( aiCam->mHorizontalFOV ) );
+		cam.setFovHorizontal( toDegrees( aiCam->mHorizontalFOV ) );
 		cam.setWorldUp( fromAssimp( aiCam->mUp ) * nodeOri );
 		cam.setEyePoint( fromAssimp( aiCam->mPosition ) + nodePos );
 		cam.setViewDirection( fromAssimp( aiCam->mLookAt ) * nodeOri );
