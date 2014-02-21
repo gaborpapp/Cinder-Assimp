@@ -449,6 +449,7 @@ void AssimpLoader::loadCameras()
 		AssimpNodeRef cameraNode = getAssimpNode( cameraName );
 		Quatf nodeOri = cameraNode->getDerivedOrientation();
 		Vec3f nodePos = cameraNode->getDerivedPosition();
+		Vec3f nodeScale = cameraNode->getDerivedScale();
 
 		CameraPersp cam;
 		if ( aiCam->mAspect != 0.f )
@@ -456,9 +457,9 @@ void AssimpLoader::loadCameras()
 		cam.setNearClip( aiCam->mClipPlaneNear );
 		cam.setFarClip( aiCam->mClipPlaneFar );
 		cam.setFovHorizontal( toDegrees( aiCam->mHorizontalFOV ) );
-		cam.setWorldUp( fromAssimp( aiCam->mUp ) * nodeOri );
-		cam.setEyePoint( fromAssimp( aiCam->mPosition ) + nodePos );
+		cam.setEyePoint( ( nodeScale * fromAssimp( aiCam->mPosition ) ) * nodeOri + nodePos );
 		cam.setViewDirection( fromAssimp( aiCam->mLookAt ) * nodeOri );
+		cam.setWorldUp( fromAssimp( aiCam->mUp ) * nodeOri );
 		mCameras.push_back( cam );
 	}
 }
