@@ -214,6 +214,8 @@ class AssimpLoader
 		ci::gl::Texture &getTexture( size_t n ) { return mModelMeshes[ n ]->mTexture; }
 		//! Returns the texture of the \a n'th mesh in the model.
 		const ci::gl::Texture &getTexture( size_t n ) const { return mModelMeshes[ n ]->mTexture; }
+		//! Returns the texture path of the \a n'th mesh in the model.
+		const ci::fs::path &getTexturePath( size_t n ) const { return mModelMeshes[ n ]->mTexturePath; }
 
 		//! Returns the number of animations in the scene.
 		size_t getNumAnimations() const;

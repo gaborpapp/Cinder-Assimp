@@ -387,6 +387,7 @@ AssimpMeshRef AssimpLoader::convertAiMesh( const aiMesh *mesh )
 		{
 			assimpMeshRef->mTexture = gl::Texture( loadImage( realPath ), format );
 		}
+		assimpMeshRef->mTexturePath = realPath;
 	}
 
 	assimpMeshRef->mAiMesh = mesh;

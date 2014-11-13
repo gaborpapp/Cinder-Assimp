@@ -24,6 +24,7 @@
 //#include "assimp/aiMesh.h"
 
 #include "cinder/Cinder.h"
+#include "cinder/Filesystem.h"
 #include "cinder/TriMesh.h"
 #include "cinder/gl/Material.h"
 #include "cinder/gl/Texture.h"
@@ -39,6 +40,7 @@ class AssimpMesh
 		const aiMesh *mAiMesh;
 
 		ci::gl::Texture mTexture;
+		ci::fs::path mTexturePath;
 
 		std::vector< uint32_t > mIndices;
 
